@@ -1,0 +1,3012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lone Gun at Sundown</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #3a2e21;
+            font-family: 'Courier New', Courier, monospace;
+            color: #f0d6a8;
+            user-select: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #gameCanvas {
+            background-color: #c2a97b;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            cursor: crosshair;
+        }
+        
+        #menuScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+        }
+        
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+        }
+        
+        #upgradeScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+        }
+        
+        #shopScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+        }
+        
+        /* Add testing panel styles */
+        #testingPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 2px solid #f0d6a8;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 20;
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 300px;
+        }
+
+        .testingSection {
+            margin-bottom: 15px;
+        }
+
+        .testingSection h3 {
+            color: #f0d6a8;
+            margin-bottom: 10px;
+        }
+
+        .testingOption {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .testingOption button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .testingOption button.remove {
+            background-color: #8b0000;
+        }
+
+        .testingOption button.remove:hover {
+            background-color: #a00000;
+        }
+
+        .testingOption button.add {
+            background-color: #006400;
+        }
+
+        .testingOption button.add:hover {
+            background-color: #008000;
+        }
+
+        .testingOption.disabled {
+            opacity: 0.5;
+        }
+
+        .testingOption.disabled button {
+            cursor: not-allowed;
+        }
+        
+        .upgradeOptions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .upgradeOption {
+            background-color: #3a2e21;
+            border: 2px solid #f0d6a8;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 250px;
+            text-align: center;
+        }
+        
+        .upgradeOption:hover {
+            transform: scale(1.05);
+            background-color: #4a3e31;
+        }
+        
+        .upgradeLevel {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .upgradeLevelDots {
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
+        }
+        
+        .levelDot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin: 0 2px;
+            background-color: #555;
+        }
+        
+        .levelDot.filled {
+            background-color: #f0d6a8;
+        }
+        
+        h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #000;
+            font-family: 'Courier New', Courier, monospace;
+            color: #f0d6a8;
+        }
+        
+        h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        h3 {
+            margin: 5px 0;
+        }
+        
+        button {
+            background-color: #8b4513;
+            color: #f0d6a8;
+            border: 2px solid #f0d6a8;
+            padding: 15px 30px;
+            font-size: 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: #a05623;
+            transform: scale(1.05);
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 5;
+            font-size: 18px;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        #ammoDisplay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 5;
+            font-size: 18px;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        #waveNotification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #f0d6a8;
+            text-shadow: 2px 2px 0 #000;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 5;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        #instructions {
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        #passiveSkills {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 5;
+            font-size: 16px;
+            text-shadow: 1px 1px 0 #000;
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 300px;
+        }
+        
+        .skillIcon {
+            background-color: rgba(58, 46, 33, 0.7);
+            border: 1px solid #f0d6a8;
+            border-radius: 5px;
+            padding: 5px;
+            margin: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 50px;
+        }
+        
+        .skillName {
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .skillLevel {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .shopOptions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            max-width: 1200px;
+            padding: 0 20px;
+        }
+        
+        .shopOption {
+            background-color: #3a2e21;
+            border: 2px solid #f0d6a8;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 200px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .shopOption h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+        
+        .shopOption p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        .shopOption i {
+            font-size: 11px;
+            color: #d4b895;
+        }
+        
+        .shopOption:hover {
+            transform: scale(1.05);
+            background-color: #4a3e31;
+        }
+        
+        .shopOption.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .shopOption.disabled:hover {
+            transform: none;
+            background-color: #3a2e21;
+        }
+        
+        .shopPrice {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #ffd700;
+        }
+        
+        .stacks {
+            font-size: 12px;
+            color: #d4b895;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud">
+            <div>Health: <span id="healthDisplay">100</span></div>
+            <div>Gold: <span id="goldDisplay">0</span></div>
+            <div>Wave: <span id="waveDisplay">1</span></div>
+        </div>
+        
+        <div id="ammoDisplay">
+            Ammo: <span id="currentAmmo">6</span>/<span id="maxAmmo">6</span>
+        </div>
+        
+        <div id="passiveSkills"></div>
+        
+        <div id="waveNotification"></div>
+        
+        <div id="menuScreen">
+            <h1>Lone Gun at Sundown</h1>
+            <div id="instructions">
+                <p>You're the last cowboy standing in a town overrun by outlaws.</p>
+                <p>Survive waves of enemies, collect gold, and choose powerful upgrades between waves.</p>
+                <p><strong>Controls:</strong> Move your mouse to aim. Click to shoot. Press R to reload.</p>
+                <p>Enemies drop gold when defeated. After each wave, choose one of three random skills to enhance your abilities!</p>
+            </div>
+            <button id="startButton">Start Game</button>
+        </div>
+        
+        <div id="gameOverScreen">
+            <h2>Game Over</h2>
+            <div>You survived <span id="finalWave">0</span> waves</div>
+            <div>Final gold: <span id="finalGold">0</span></div>
+            <button id="restartButton">Try Again</button>
+        </div>
+        
+        <div id="upgradeScreen">
+            <h2>Choose an Upgrade</h2>
+            <div class="upgradeOptions" id="upgradeOptions">
+                <!-- Upgrade options will be dynamically added here -->
+            </div>
+        </div>
+        
+        <div id="shopScreen">
+            <h2>Shop</h2>
+            <div class="shopOptions" id="shopOptions">
+                <!-- Shop options will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size - INCREASED SIZE
+        let canvasSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        
+        // Game state
+        let gameActive = false;
+        let gameOver = false;
+        let wave = 1;
+        let waveInProgress = false;
+        let enemiesRemaining = 0;
+        let showShop = false;
+        
+        // Passive skills definitions
+        const passiveSkillsData = {
+            ricochet: {
+                name: "Ricochet",
+                description: "Bullets bounce to nearby enemies.",
+                flavor: "One shot, many hits.",
+                maxLevel: 5,
+                levels: [
+                    { bounces: 1, damage: 0.5 },
+                    { bounces: 2, damage: 0.6 },
+                    { bounces: 2, damage: 0.7 },
+                    { bounces: 3, damage: 0.8 },
+                    { bounces: 3, damage: 0.9 }
+                ],
+                level: 0
+            },
+            burningBullets: {
+                name: "Burning Bullets",
+                description: "Shots inflict burn damage over time.",
+                flavor: "Hot lead keeps on cookin'.",
+                maxLevel: 5,
+                levels: [
+                    { damage: 5, duration: 2 },
+                    { damage: 7, duration: 2.5 },
+                    { damage: 9, duration: 3 },
+                    { damage: 11, duration: 3.5 },
+                    { damage: 15, duration: 4 }
+                ],
+                level: 0
+            },
+            lightningAmmo: {
+                name: "Lightning Ammo",
+                description: "Shots chain lightning to nearby enemies.",
+                flavor: "Thunder in every shot.",
+                maxLevel: 5,
+                levels: [
+                    { chains: 1, damage: 0.25 },
+                    { chains: 1, damage: 0.35 },
+                    { chains: 2, damage: 0.45 },
+                    { chains: 2, damage: 0.55 },
+                    { chains: 3, damage: 0.65 }
+                ],
+                level: 0
+            },
+            dynamiteDrop: {
+                name: "Dynamite Drop",
+                description: "Automatically throws dynamite every few seconds.",
+                flavor: "Boom on the regular.",
+                maxLevel: 5,
+                levels: [
+                    { damage: 30, interval: 10 },
+                    { damage: 40, interval: 9 },
+                    { damage: 50, interval: 8 },
+                    { damage: 60, interval: 7 },
+                    { damage: 75, interval: 6 }
+                ],
+                level: 0,
+                lastDrop: 0
+            },
+            reloadSpeed: {
+                name: "Reload Speed",
+                description: "Increases reload speed.",
+                flavor: "Quick hands, quicker fights.",
+                maxLevel: 5,
+                levels: [
+                    { bonus: 0.2 },
+                    { bonus: 0.3 },
+                    { bonus: 0.4 },
+                    { bonus: 0.5 },
+                    { bonus: 0.6 }
+                ],
+                level: 0
+            },
+            fireRate: {
+                name: "Fire Rate",
+                description: "Increases firing speed.",
+                flavor: "Bullets fly faster.",
+                maxLevel: 5,
+                levels: [
+                    { bonus: 0.15 },
+                    { bonus: 0.25 },
+                    { bonus: 0.35 },
+                    { bonus: 0.45 },
+                    { bonus: 0.6 }
+                ],
+                level: 0
+            },
+            doubleShot: {
+                name: "Double Shot",
+                description: "Chance to fire two bullets per shot.",
+                flavor: "Twice the trouble.",
+                maxLevel: 5,
+                levels: [
+                    { chance: 0.1 },
+                    { chance: 0.18 },
+                    { chance: 0.26 },
+                    { chance: 0.34 },
+                    { chance: 0.45 }
+                ],
+                level: 0
+            },
+            healthBoost: {
+                name: "Health Boost",
+                description: "Increases max health.",
+                flavor: "Tough as old boots.",
+                maxLevel: 5,
+                levels: [
+                    { bonus: 0.1 },
+                    { bonus: 0.2 },
+                    { bonus: 0.3 },
+                    { bonus: 0.4 },
+                    { bonus: 0.5 }
+                ],
+                level: 0
+            },
+            ammoCapacity: {
+                name: "Ammo Capacity",
+                description: "Increases revolver ammo capacity.",
+                flavor: "More lead to sling.",
+                maxLevel: 5,
+                levels: [
+                    { bonus: 2 },
+                    { bonus: 3 },
+                    { bonus: 5 },
+                    { bonus: 7 },
+                    { bonus: 9 }
+                ],
+                level: 0
+            },
+            piercingRounds: {
+                name: "Piercing Rounds",
+                description: "Bullets pierce through enemies.",
+                flavor: "Straight through 'em.",
+                maxLevel: 5,
+                levels: [
+                    { pierce: 1, damage: 0.75 },
+                    { pierce: 1, damage: 0.85 },
+                    { pierce: 2, damage: 0.9 },
+                    { pierce: 2, damage: 0.95 },
+                    { pierce: 3, damage: 1.0 }
+                ],
+                level: 0
+            },
+            luckyShot: {
+                name: "Lucky Shot",
+                description: "Chance for critical hits.",
+                flavor: "Lady Luck's smilin'.",
+                maxLevel: 5,
+                levels: [
+                    { chance: 0.1, damage: 1.5 },
+                    { chance: 0.15, damage: 1.7 },
+                    { chance: 0.2, damage: 1.9 },
+                    { chance: 0.25, damage: 2.1 },
+                    { chance: 0.3, damage: 2.5 }
+                ],
+                level: 0
+            },
+            scatterPellets: {
+                name: "Scatter Pellets",
+                description: "Shots release small pellets in a spread.",
+                flavor: "Spread the pain.",
+                maxLevel: 5,
+                levels: [
+                    { pellets: 2, damage: 10 },
+                    { pellets: 3, damage: 15 },
+                    { pellets: 3, damage: 20 },
+                    { pellets: 4, damage: 25 },
+                    { pellets: 5, damage: 30 }
+                ],
+                level: 0
+            },
+            thickSkin: {
+                name: "Thick Skin",
+                description: "Reduces damage taken.",
+                flavor: "Bullets bounce off.",
+                maxLevel: 5,
+                levels: [
+                    { reduction: 0.1 },
+                    { reduction: 0.15 },
+                    { reduction: 0.2 },
+                    { reduction: 0.25 },
+                    { reduction: 0.35 }
+                ],
+                level: 0
+            },
+            goldRush: {
+                name: "Gold Rush",
+                description: "Increases gold dropped by enemies.",
+                flavor: "Rakin' in the riches.",
+                maxLevel: 5,
+                levels: [
+                    { bonus: 0.2 },
+                    { bonus: 0.3 },
+                    { bonus: 0.4 },
+                    { bonus: 0.5 },
+                    { bonus: 0.7 }
+                ],
+                level: 0
+            },
+            bulletStorm: {
+                name: "Bullet Storm",
+                description: "Chance to fire an extra shot immediately after a kill.",
+                flavor: "Keep the storm ragin'.",
+                maxLevel: 5,
+                levels: [
+                    { chance: 0.1 },
+                    { chance: 0.18 },
+                    { chance: 0.26 },
+                    { chance: 0.34 },
+                    { chance: 0.45 }
+                ],
+                level: 0
+            },
+            rawPower: {
+                name: "Raw Power",
+                description: "Bullets hit harder, forged from frontier steel.",
+                flavor: "Lead's got a meaner bite.",
+                maxLevel: 5,
+                levels: [
+                    { bonus: 0.1 },
+                    { bonus: 0.2 },
+                    { bonus: 0.3 },
+                    { bonus: 0.4 },
+                    { bonus: 0.5 }
+                ],
+                level: 0
+            },
+            frostbiteSlugs: {
+                name: "Frostbite Slugs",
+                description: "Chance to freeze enemies cold as a mountain winter.",
+                flavor: "Chills 'em to the bone.",
+                maxLevel: 5,
+                levels: [
+                    { chance: 0.1, duration: 2 },
+                    { chance: 0.15, duration: 2.5 },
+                    { chance: 0.2, duration: 3 },
+                    { chance: 0.25, duration: 3.5 },
+                    { chance: 0.3, duration: 4 }
+                ],
+                level: 0
+            },
+            ammoSaver: {
+                name: "Ammo Saver",
+                description: "Shots might not cost a bullet, like a cowboy's thrift.",
+                flavor: "Stretchin' the lead supply.",
+                maxLevel: 5,
+                levels: [
+                    { chance: 0.1 },
+                    { chance: 0.18 },
+                    { chance: 0.26 },
+                    { chance: 0.34 },
+                    { chance: 0.45 }
+                ],
+                level: 0
+            },
+            trappersContraption: {
+                name: "Trapper's Contraption",
+                description: "Deploys small, automated contraptions that fire at enemies periodically.",
+                flavor: "Trapper's rigs spit lead in a chorus.",
+                maxLevel: 5,
+                levels: [
+                    { turrets: 1, damage: 15, interval: 1.0 },
+                    { turrets: 1, damage: 20, interval: 0.8 },
+                    { turrets: 2, damage: 15, interval: 0.7 },
+                    { turrets: 2, damage: 20, interval: 0.6 },
+                    { turrets: 3, damage: 20, interval: 0.5 }
+                ],
+                level: 0,
+                lastShot: 0
+            }
+        };
+        
+        // Boss definitions
+        const bossData = {
+            baseHealth: 400,
+            baseDamage: 25,
+            healthScaling: 0.5, // 50% increase per 10 waves
+            damageScaling: 12.5, // Average of 10-15 increase per 10 waves
+            getStats: function(wave) {
+                const bossWave = Math.floor(wave / 10);
+                const healthMultiplier = Math.pow(1 + this.healthScaling, bossWave - 1);
+                const damageBonus = (bossWave - 1) * this.damageScaling;
+                
+                return {
+                    health: Math.floor(this.baseHealth * healthMultiplier),
+                    damage: Math.floor(this.baseDamage + damageBonus)
+                };
+            }
+        };
+        
+        // Synergy skills definitions
+        const synergySkillsData = {
+            thunderBuckshot: {
+                name: "Thunder Buckshot",
+                description: "Lightning arcs between scatter pellets, zapping foes.",
+                flavor: "Storm rides the buckshot trail.",
+                requiredSkills: ['lightningAmmo', 'scatterPellets'],
+                effect: function(lightningLevel, scatterLevel) {
+                    const combinedLevel = lightningLevel + scatterLevel;
+                    return {
+                        damage: 10,
+                        bonus: 0.05 * combinedLevel
+                    };
+                }
+            },
+            frostbiteTraps: {
+                name: "Frostbite Traps",
+                description: "Turrets fire frost-tipped shots that slow enemies.",
+                flavor: "Traps fire cold lead, freezin' foes in their boots.",
+                requiredSkills: ['frostbiteSlugs', 'trappersContraption'],
+                effect: function(frostLevel, trapLevel) {
+                    const combinedLevel = frostLevel + trapLevel;
+                    return {
+                        chance: 0.15 + (0.05 * combinedLevel),
+                        slowAmount: 0.2,
+                        duration: 2 + (0.5 * combinedLevel)
+                    };
+                }
+            },
+            stormSurge: {
+                name: "Storm Surge",
+                description: "Extra shots from kills deal bonus damage.",
+                flavor: "Kills unleash a storm o' hurt.",
+                requiredSkills: ['bulletStorm', 'rawPower'],
+                effect: function(stormLevel, powerLevel) {
+                    const combinedLevel = stormLevel + powerLevel;
+                    return {
+                        damageBonus: 0.2 + (0.05 * combinedLevel)
+                    };
+                }
+            },
+            bulletRain: {
+                name: "Bullet Rain",
+                description: "Faster firing boosts double shot chance.",
+                flavor: "Lead falls like a prairie storm.",
+                requiredSkills: ['fireRate', 'doubleShot'],
+                effect: function(fireRateLevel, doubleShotLevel) {
+                    return {
+                        doubleShotBonus: 0.05 * fireRateLevel
+                    };
+                }
+            },
+            toughReload: {
+                name: "Tough Reload",
+                description: "Reloading restores a small amount of health.",
+                flavor: "New clip, new grit.",
+                requiredSkills: ['thickSkin', 'reloadSpeed'],
+                effect: function(skinLevel, reloadLevel) {
+                    const combinedLevel = skinLevel + reloadLevel;
+                    return {
+                        healAmount: 5 + combinedLevel
+                    };
+                }
+            },
+            dynamiteBarrage: {
+                name: "Dynamite Barrage",
+                description: "Faster firing speeds up dynamite throws.",
+                flavor: "Blasting keeps pace with the trigger.",
+                requiredSkills: ['dynamiteDrop', 'fireRate'],
+                effect: function(dynamiteLevel, fireRateLevel) {
+                    return {
+                        intervalReduction: 0.5 * fireRateLevel
+                    };
+                }
+            }
+        };
+        
+        // Track active synergy skills
+        let activeSynergySkills = {};
+        
+        // Track active skills
+        let activePassiveSkills = {};
+        let totalSkillLevels = 0;
+        
+        // Player stats
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            angle: 0,
+            health: 100,
+            maxHealth: 100,
+            gold: 0,
+            damage: 25,
+            ammo: 6,
+            maxAmmo: 6,
+            reloading: false,
+            reloadTime: 1500,
+            baseReloadTime: 1500,
+            reloadStartTime: 0,
+            lastShotTime: 0,
+            shotCooldown: 300
+        };
+        
+        // Entities
+        let bullets = [];
+        let enemies = [];
+        let goldDrops = [];
+        let burningEnemies = [];
+        let dynamiteExplosions = [];
+        let frozenEnemies = [];
+        let turrets = []; // Add turrets array
+        
+        // Mouse position
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        // UI Elements
+        const menuScreen = document.getElementById('menuScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const upgradeScreen = document.getElementById('upgradeScreen');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const healthDisplay = document.getElementById('healthDisplay');
+        const goldDisplay = document.getElementById('goldDisplay');
+        const waveDisplay = document.getElementById('waveDisplay');
+        const currentAmmoDisplay = document.getElementById('currentAmmo');
+        const maxAmmoDisplay = document.getElementById('maxAmmo');
+        const waveNotification = document.getElementById('waveNotification');
+        const finalWaveDisplay = document.getElementById('finalWave');
+        const finalGoldDisplay = document.getElementById('finalGold');
+        const upgradeOptions = document.getElementById('upgradeOptions');
+        const passiveSkillsDisplay = document.getElementById('passiveSkills');
+        const shopOptions = document.getElementById('shopOptions');
+        
+        // Event listeners
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', restartGame);
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            
+            // Calculate angle
+            const dx = mouseX - player.x;
+            const dy = mouseY - player.y;
+            player.angle = Math.atan2(dy, dx);
+        });
+        
+        canvas.addEventListener('click', () => {
+            if (gameActive && !gameOver && !player.reloading) {
+                const currentTime = Date.now();
+                if (currentTime - player.lastShotTime >= player.shotCooldown) {
+                    shootBullet();
+                    player.lastShotTime = currentTime;
+                }
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                reload();
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            canvasSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+        });
+        
+        // Game functions
+        function startGame() {
+            menuScreen.style.display = 'none';
+            gameActive = true;
+            gameOver = false;
+            resetGame();
+            startWave();
+            gameLoop();
+        }
+        
+        function restartGame() {
+            gameOverScreen.style.display = 'none';
+            gameActive = true;
+            gameOver = false;
+            resetGame();
+            startWave();
+        }
+        
+        function resetGame() {
+            wave = 1;
+            waveInProgress = false;
+            enemiesRemaining = 0;
+            showShop = false;
+            
+            // Reset passive skills
+            activePassiveSkills = {};
+            totalSkillLevels = 0;
+            
+            // Reset player
+            player = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 20,
+                angle: 0,
+                health: 100,
+                maxHealth: 100,
+                gold: 0,
+                damage: 25,
+                ammo: 6,
+                maxAmmo: 6,
+                reloading: false,
+                reloadTime: 1500,
+                baseReloadTime: 1500,
+                reloadStartTime: 0,
+                lastShotTime: 0,
+                shotCooldown: 300
+            };
+            
+            // Reset all skill levels
+            for (const skillId in passiveSkillsData) {
+                passiveSkillsData[skillId].level = 0;
+            }
+            
+            // Reset shop items
+            for (const itemId in shopItems) {
+                shopItems[itemId].stacks = 0;
+            }
+            
+            bullets = [];
+            enemies = [];
+            goldDrops = [];
+            burningEnemies = [];
+            dynamiteExplosions = [];
+            frozenEnemies = [];
+            
+            // Reset turrets
+            turrets = [];
+            
+            updateHUD();
+            updatePassiveSkillsDisplay();
+        }
+        
+        function startWave() {
+            waveInProgress = true;
+            // Reduced scaling for enemy count
+            enemiesRemaining = Math.floor(wave * 2.5) + 2;
+            
+            showWaveNotification(`Wave ${wave} Starting!`);
+            
+            // Spawn initial enemies
+            const initialSpawn = Math.min(enemiesRemaining, Math.ceil(wave * 1.2));
+            for (let i = 0; i < initialSpawn; i++) {
+                spawnEnemy();
+            }
+            
+            // Check if this is a boss wave
+            if (wave % 10 === 0) {
+                // Spawn boss when half of the enemies are defeated
+                const bossSpawnThreshold = Math.ceil(enemiesRemaining / 2);
+                enemiesRemaining++; // Add one for the boss
+                
+                // Store the boss spawn threshold
+                this.bossSpawnThreshold = bossSpawnThreshold;
+                this.bossSpawned = false;
+            }
+            
+            updateHUD();
+        }
+        
+        function spawnBoss() {
+            const stats = bossData.getStats(wave);
+            const angle = Math.random() * Math.PI * 2;
+            const spawnRadius = canvas.width / 2 + 70;
+            
+            const boss = {
+                x: canvas.width / 2 + Math.cos(angle) * spawnRadius,
+                y: canvas.height / 2 + Math.sin(angle) * spawnRadius,
+                radius: 25, // Larger than regular enemies
+                speed: 0.3 + (wave * 0.01), // Slightly slower than regular enemies
+                health: stats.health,
+                maxHealth: stats.health,
+                damage: stats.damage,
+                value: 100 + (wave * 10), // Base value + scaling
+                lastAttack: 0,
+                attackCooldown: 1000,
+                isBoss: true
+            };
+            
+            enemies.push(boss);
+            showWaveNotification("BOSS INCOMING!");
+        }
+        
+        function checkBossSpawn() {
+            if (wave % 10 === 0 && !this.bossSpawned) {
+                const remainingEnemies = enemies.filter(e => !e.isBoss).length;
+                if (remainingEnemies <= this.bossSpawnThreshold) {
+                    spawnBoss();
+                    this.bossSpawned = true;
+                }
+            }
+        }
+        
+        function startNextWave() {
+            upgradeScreen.style.display = 'none';
+            wave++;
+            
+            // Heal player between waves
+            healPlayer();
+            
+            // Reload weapon between waves
+            reloadWeapon();
+            
+            startWave();
+            gameActive = true;
+        }
+        
+        function healPlayer() {
+            // Heal player to full health between waves
+            player.health = player.maxHealth;
+            updateHUD();
+            showWaveNotification("Health Restored!");
+        }
+        
+        function reloadWeapon() {
+            // Fully reload weapon between waves
+            player.ammo = player.maxAmmo;
+            player.reloading = false;
+            updateHUD();
+        }
+        
+        function showWaveNotification(text) {
+            waveNotification.textContent = text;
+            waveNotification.style.opacity = 1;
+            
+            setTimeout(() => {
+                waveNotification.style.opacity = 0;
+            }, 2000);
+        }
+        
+        function collectAllGold() {
+            let totalCollected = 0;
+            
+            // Animation frames for gold collection
+            const frames = 20;
+            let currentFrame = 0;
+            
+            // Save original positions for animation
+            const originalPositions = goldDrops.map(gold => ({
+                x: gold.x,
+                y: gold.y,
+                value: gold.value
+            }));
+            
+            // Total gold value to collect
+            for (const gold of goldDrops) {
+                totalCollected += gold.value;
+            }
+            
+            // Show notification about gold collection
+            if (totalCollected > 0) {
+                showWaveNotification(`Collected ${totalCollected} Gold!`);
+            }
+            
+            // Animate gold collection
+            function animateGoldCollection() {
+                if (currentFrame < frames) {
+                    // Update gold positions to move toward player
+                    for (let i = 0; i < goldDrops.length; i++) {
+                        const gold = goldDrops[i];
+                        const original = originalPositions[i];
+                        
+                        // Calculate progress (0 to 1)
+                        const progress = currentFrame / frames;
+                        
+                        // Move gold toward player with easing
+                        gold.x = original.x + (player.x - original.x) * progress;
+                        gold.y = original.y + (player.y - original.y) * progress;
+                    }
+                    
+                    currentFrame++;
+                    requestAnimationFrame(animateGoldCollection);
+                } else {
+                    // Add gold to player and clear gold drops
+                    player.gold += totalCollected;
+                    goldDrops = [];
+                    updateHUD();
+                }
+            }
+            
+            // Start animation if there's gold to collect
+            if (goldDrops.length > 0) {
+                animateGoldCollection();
+            }
+        }
+        
+        function showUpgradeOptions() {
+            gameActive = false;
+            
+            // Collect all gold before showing upgrade screen
+            collectAllGold();
+            
+            // Show upgrade screen after a short delay to allow gold collection animation
+            setTimeout(() => {
+                upgradeScreen.style.display = 'flex';
+                
+                // Clear previous options
+                upgradeOptions.innerHTML = '';
+                
+                // Get available skills (not maxed out)
+                const availableSkills = Object.keys(passiveSkillsData).filter(
+                    skillId => passiveSkillsData[skillId].level < passiveSkillsData[skillId].maxLevel
+                );
+                
+                // Check for available synergies
+                const availableSynergies = [];
+                for (const [synergyId, synergy] of Object.entries(synergySkillsData)) {
+                    if (!activeSynergySkills[synergyId]) {
+                        const hasRequiredSkills = synergy.requiredSkills.every(skillId => 
+                            passiveSkillsData[skillId].level > 0
+                        );
+                        
+                        if (hasRequiredSkills && Math.random() < 0.1) { // 10% chance for synergy
+                            availableSynergies.push({
+                                id: synergyId,
+                                ...synergy
+                            });
+                        }
+                    }
+                }
+                
+                // Randomly select skills and synergies
+                const selectedOptions = [];
+                
+                // Add available synergies first
+                while (selectedOptions.length < 3 && availableSynergies.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableSynergies.length);
+                    selectedOptions.push({
+                        type: 'synergy',
+                        data: availableSynergies[randomIndex]
+                    });
+                    availableSynergies.splice(randomIndex, 1);
+                }
+                
+                // Fill remaining slots with regular skills
+                while (selectedOptions.length < 3 && availableSkills.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableSkills.length);
+                    selectedOptions.push({
+                        type: 'skill',
+                        data: availableSkills[randomIndex]
+                    });
+                    availableSkills.splice(randomIndex, 1);
+                }
+                
+                // Create upgrade options
+                selectedOptions.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'upgradeOption';
+                    
+                    if (option.type === 'synergy') {
+                        const synergy = option.data;
+                        optionElement.dataset.synergyId = synergy.id;
+                        optionElement.style.borderColor = '#ffd700'; // Golden border for synergies
+                        
+                        // Calculate effect based on current skill levels
+                        const skillLevels = synergy.requiredSkills.map(skillId => 
+                            passiveSkillsData[skillId].level
+                        );
+                        const effect = synergy.effect(...skillLevels);
+                        
+                        optionElement.innerHTML = `
+                            <h3>${synergy.name}</h3>
+                            <p>${synergy.description}</p>
+                            <p><i>"${synergy.flavor}"</i></p>
+                            <p>${effect.damage} damage per pellet + ${effect.bonus * 100}% bonus</p>
+                            <div class="upgradeLevel">Synergy Effect</div>
+                        `;
+                        
+                        optionElement.addEventListener('click', () => {
+                            selectSynergy(synergy.id);
+                        });
+                    } else {
+                        const skillId = option.data;
+                        const skill = passiveSkillsData[skillId];
+                        const currentLevel = skill.level;
+                        const nextLevel = currentLevel + 1;
+                        const levelData = skill.levels[nextLevel - 1];
+                        
+                        optionElement.dataset.skillId = skillId;
+                        
+                        const levelDescription = getSkillLevelDescription(skillId, nextLevel);
+                        
+                        optionElement.innerHTML = `
+                            <h3>${skill.name}</h3>
+                            <p>${skill.description}</p>
+                            <p><i>"${skill.flavor}"</i></p>
+                            <p>${levelDescription}</p>
+                            <div class="upgradeLevel">Level ${currentLevel} → ${nextLevel}</div>
+                            <div class="upgradeLevelDots">
+                                ${createLevelDots(currentLevel, nextLevel, skill.maxLevel)}
+                            </div>
+                        `;
+                        
+                        optionElement.addEventListener('click', () => {
+                            selectUpgrade(skillId);
+                        });
+                    }
+                    
+                    upgradeOptions.appendChild(optionElement);
+                });
+            }, 1000);
+        }
+        
+        function createLevelDots(currentLevel, nextLevel, maxLevel) {
+            let dots = '';
+            for (let i = 1; i <= maxLevel; i++) {
+                if (i <= currentLevel) {
+                    dots += '<div class="levelDot filled"></div>';
+                } else if (i === nextLevel) {
+                    dots += '<div class="levelDot" style="background-color: #a05623;"></div>';
+                } else {
+                    dots += '<div class="levelDot"></div>';
+                }
+            }
+            return dots;
+        }
+        
+        function getSkillLevelDescription(skillId, level) {
+            const skill = passiveSkillsData[skillId];
+            const levelData = skill.levels[level - 1];
+            
+            switch (skillId) {
+                case 'ricochet':
+                    return `${levelData.bounces} bounce${levelData.bounces > 1 ? 's' : ''}, ${levelData.damage * 100}% damage`;
+                case 'burningBullets':
+                    return `${levelData.damage} damage/sec for ${levelData.duration} sec`;
+                case 'lightningAmmo':
+                    return `Chains to ${levelData.chains} enem${levelData.chains > 1 ? 'ies' : 'y'}, ${levelData.damage * 100}% damage`;
+                case 'dynamiteDrop':
+                    return `${levelData.damage} damage, every ${levelData.interval} sec`;
+                case 'reloadSpeed':
+                    return `+${levelData.bonus * 100}% reload speed`;
+                case 'fireRate':
+                    return `+${levelData.bonus * 100}% firing speed`;
+                case 'doubleShot':
+                    return `${levelData.chance * 100}% chance`;
+                case 'healthBoost':
+                    return `+${levelData.bonus * 100}% max health`;
+                case 'ammoCapacity':
+                    return `+${levelData.bonus} bullets (${6 + levelData.bonus} total)`;
+                case 'piercingRounds':
+                    return `Pierces ${levelData.pierce} enem${levelData.pierce > 1 ? 'ies' : 'y'}, ${levelData.damage * 100}% damage`;
+                case 'luckyShot':
+                    return `${levelData.chance * 100}% chance, ${levelData.damage * 100}% damage`;
+                case 'scatterPellets':
+                    return `${levelData.pellets} pellets, ${levelData.damage} damage each`;
+                case 'thickSkin':
+                    return `-${levelData.reduction * 100}% damage taken`;
+                case 'goldRush':
+                    return `+${levelData.bonus * 100}% gold`;
+                case 'bulletStorm':
+                    return `${levelData.chance * 100}% chance after kill`;
+                case 'rawPower':
+                    return `+${levelData.bonus * 100}% damage`;
+                case 'frostbiteSlugs':
+                    return `${levelData.chance * 100}% chance, ${levelData.duration} sec freeze`;
+                case 'ammoSaver':
+                    return `${levelData.chance * 100}% chance to not use ammo`;
+                case 'trappersContraption':
+                    return `${levelData.turrets} turrets, ${levelData.damage} damage each, every ${levelData.interval} sec`;
+                default:
+                    return '';
+            }
+        }
+        
+        function selectUpgrade(skillId) {
+            const skill = passiveSkillsData[skillId];
+            
+            if (skill.level < skill.maxLevel) {
+                skill.level++;
+                totalSkillLevels++;
+                
+                // Add to active skills if not already there
+                if (!activePassiveSkills[skillId]) {
+                    activePassiveSkills[skillId] = true;
+                }
+                
+                // Apply immediate effects
+                applySkillEffects(skillId);
+                
+                // Update synergy effects if this skill is part of any synergies
+                updateSynergyEffects(skillId);
+                
+                // Update HUD and start next wave
+                updatePassiveSkillsDisplay();
+                updateHUD();
+                startNextWave();
+            }
+        }
+        
+        function updateSynergyEffects(skillId) {
+            // Check all synergies to see if they use this skill
+            for (const [synergyId, synergy] of Object.entries(synergySkillsData)) {
+                if (activeSynergySkills[synergyId] && synergy.requiredSkills.includes(skillId)) {
+                    // Recalculate the synergy effect with current skill levels
+                    const skillLevels = synergy.requiredSkills.map(sid => 
+                        passiveSkillsData[sid].level
+                    );
+                    const effect = synergy.effect(...skillLevels);
+                    
+                    // Update the stored effect
+                    activeSynergySkills[synergyId] = effect;
+                }
+            }
+        }
+        
+        function applySkillEffects(skillId) {
+            const skill = passiveSkillsData[skillId];
+            const level = skill.level;
+            const levelData = skill.levels[level - 1];
+            
+            switch (skillId) {
+                case 'healthBoost':
+                    const oldMaxHealth = player.maxHealth;
+                    player.maxHealth = 100 * (1 + levelData.bonus);
+                    // Heal the player by the difference in max health
+                    player.health += (player.maxHealth - oldMaxHealth);
+                    break;
+                case 'ammoCapacity':
+                    player.maxAmmo = 6 + levelData.bonus;
+                    break;
+                case 'reloadSpeed':
+                    player.baseReloadTime = 1500 / (1 + levelData.bonus);
+                    player.reloadTime = player.baseReloadTime;
+                    break;
+                case 'fireRate':
+                    player.shotCooldown = 300 / (1 + levelData.bonus);
+                    break;
+                case 'trappersContraption':
+                    // Remove old turrets
+                    turrets = [];
+                    // Add new turrets
+                    for (let i = 0; i < levelData.turrets; i++) {
+                        const angle = (Math.PI * 2 * i) / levelData.turrets;
+                        const distance = 100; // Distance from player
+                        turrets.push({
+                            x: player.x + Math.cos(angle) * distance,
+                            y: player.y + Math.sin(angle) * distance,
+                            damage: levelData.damage,
+                            interval: levelData.interval * 1000,
+                            lastShot: 0
+                        });
+                    }
+                    break;
+            }
+        }
+        
+        function updatePassiveSkillsDisplay() {
+            passiveSkillsDisplay.innerHTML = '';
+            
+            for (const skillId in activePassiveSkills) {
+                const skill = passiveSkillsData[skillId];
+                if (skill.level > 0) {
+                    const skillElement = document.createElement('div');
+                    skillElement.className = 'skillIcon';
+                    skillElement.innerHTML = `
+                        <div class="skillName">${skill.name}</div>
+                        <div class="skillLevel">${skill.level}</div>
+                    `;
+                    passiveSkillsDisplay.appendChild(skillElement);
+                }
+            }
+        }
+        
+        function spawnEnemy() {
+            const angle = Math.random() * Math.PI * 2;
+            const spawnRadius = canvas.width / 2 + 70; // Increased spawn distance for larger arena
+            
+            const enemy = {
+                x: canvas.width / 2 + Math.cos(angle) * spawnRadius,
+                y: canvas.height / 2 + Math.sin(angle) * spawnRadius,
+                radius: 15,
+                // Slower enemy speed scaling
+                speed: 0.35 + Math.random() * 0.4 + (wave * 0.02),
+                // Slower health scaling
+                health: 30 + (wave * 3),
+                maxHealth: 30 + (wave * 3),
+                // Slower damage scaling
+                damage: 10 + Math.floor(wave * 0.5),
+                value: 5 + Math.floor(wave / 3),
+                lastAttack: 0,
+                attackCooldown: 1000,
+                burning: false,
+                burnDamage: 0,
+                burnDuration: 0,
+                burnStart: 0,
+                frozen: false,
+                frozenUntil: 0
+            };
+            
+            enemies.push(enemy);
+        }
+        
+        function shootBullet() {
+            if (player.ammo <= 0) {
+                reload();
+                return;
+            }
+            
+            // Check for double shot with Bullet Rain bonus
+            let doubleShotChance = 0;
+            if (passiveSkillsData.doubleShot.level > 0) {
+                doubleShotChance = passiveSkillsData.doubleShot.levels[passiveSkillsData.doubleShot.level - 1].chance;
+                
+                // Apply Bullet Rain bonus if active
+                if (activeSynergySkills.bulletRain) {
+                    doubleShotChance += activeSynergySkills.bulletRain.doubleShotBonus;
+                }
+            }
+            
+            const doubleShot = Math.random() < doubleShotChance;
+            
+            // Create primary bullet
+            createBullet(player.angle);
+            
+            // Create second bullet if double shot triggered
+            if (doubleShot) {
+                // Slight angle variation for second bullet
+                const angleVariation = (Math.random() - 0.5) * 0.2;
+                createBullet(player.angle + angleVariation);
+            }
+            
+            // Check for ammo saver
+            let useAmmo = true;
+            if (passiveSkillsData.ammoSaver.level > 0) {
+                const saveChance = passiveSkillsData.ammoSaver.levels[passiveSkillsData.ammoSaver.level - 1].chance;
+                if (Math.random() < saveChance) {
+                    useAmmo = false;
+                }
+            }
+            
+            if (useAmmo) {
+                player.ammo--;
+            }
+            
+            updateHUD();
+            
+            // Auto reload when empty
+            if (player.ammo <= 0) {
+                reload();
+            }
+        }
+        
+        // Add lightningArcs array to track active lightning effects
+        let lightningArcs = [];
+        
+        // Modify the createBullet function's scatter pellets section
+        function createBullet(angle, damageBonus = 0) {
+            // Calculate base damage with Raw Power bonus
+            let baseDamage = player.damage;
+            if (passiveSkillsData.rawPower.level > 0) {
+                const powerBonus = passiveSkillsData.rawPower.levels[passiveSkillsData.rawPower.level - 1].bonus;
+                baseDamage *= (1 + powerBonus);
+            }
+            
+            // Apply Storm Surge bonus if present
+            if (damageBonus > 0) {
+                baseDamage *= (1 + damageBonus);
+            }
+            
+            // Check for lucky shot (critical hit)
+            let damage = baseDamage;
+            let isCritical = false;
+            
+            if (passiveSkillsData.luckyShot.level > 0) {
+                const luckyChance = passiveSkillsData.luckyShot.levels[passiveSkillsData.luckyShot.level - 1].chance;
+                if (Math.random() < luckyChance) {
+                    const critMultiplier = passiveSkillsData.luckyShot.levels[passiveSkillsData.luckyShot.level - 1].damage;
+                    damage *= critMultiplier;
+                    isCritical = true;
+                }
+            }
+            
+            // Check for frostbite effect
+            let hasFrostbite = false;
+            let frostbiteDuration = 0;
+            if (passiveSkillsData.frostbiteSlugs.level > 0) {
+                const frostChance = passiveSkillsData.frostbiteSlugs.levels[passiveSkillsData.frostbiteSlugs.level - 1].chance;
+                if (Math.random() < frostChance) {
+                    hasFrostbite = true;
+                    frostbiteDuration = passiveSkillsData.frostbiteSlugs.levels[passiveSkillsData.frostbiteSlugs.level - 1].duration;
+                }
+            }
+            
+            const bullet = {
+                x: player.x,
+                y: player.y,
+                radius: 3,
+                speed: 10,
+                angle: angle,
+                damage: damage,
+                pierceCount: 0,
+                pierceMax: 0,
+                pierceDamageMultiplier: 1,
+                isCritical: isCritical,
+                hasFrostbite: hasFrostbite,
+                frostbiteDuration: frostbiteDuration,
+                hitEnemies: []
+            };
+            
+            // Apply piercing rounds effect
+            if (passiveSkillsData.piercingRounds.level > 0) {
+                const pierceData = passiveSkillsData.piercingRounds.levels[passiveSkillsData.piercingRounds.level - 1];
+                bullet.pierceMax = pierceData.pierce;
+                bullet.pierceDamageMultiplier = pierceData.damage;
+            }
+            
+            bullets.push(bullet);
+            
+            // Create scatter pellets if the skill is active
+            if (passiveSkillsData.scatterPellets.level > 0) {
+                const pelletData = passiveSkillsData.scatterPellets.levels[passiveSkillsData.scatterPellets.level - 1];
+                const pelletCount = pelletData.pellets;
+                const pelletDamage = pelletData.damage * (1 + damageBonus); // Apply storm surge bonus to pellets
+                
+                // Create array to store pellets for thunder buckshot effect
+                const pellets = [];
+                
+                for (let i = 0; i < pelletCount; i++) {
+                    const spreadAngle = angle + (Math.random() - 0.5) * 0.8;
+                    const pellet = {
+                        x: player.x,
+                        y: player.y,
+                        radius: 2,
+                        speed: 8,
+                        angle: spreadAngle,
+                        damage: pelletDamage,
+                        isPellet: true
+                    };
+                    bullets.push(pellet);
+                    pellets.push(pellet);
+                }
+                
+                // Apply thunder buckshot effect if active
+                if (activeSynergySkills.thunderBuckshot) {
+                    const effect = activeSynergySkills.thunderBuckshot;
+                    
+                    // Create lightning arcs between pellets
+                    for (let i = 0; i < pellets.length; i++) {
+                        for (let j = i + 1; j < pellets.length; j++) {
+                            const lightning = {
+                                startX: pellets[i].x,
+                                startY: pellets[i].y,
+                                endX: pellets[j].x,
+                                endY: pellets[j].y,
+                                damage: effect.damage * (1 + effect.bonus),
+                                alpha: 1,
+                                duration: 15,
+                                color: '#00ffff',
+                                pellets: [pellets[i], pellets[j]]
+                            };
+                            
+                            // Add to lightningArcs array
+                            lightningArcs.push(lightning);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function reload() {
+            if (!player.reloading && player.ammo < player.maxAmmo) {
+                player.reloading = true;
+                player.reloadStartTime = Date.now();
+                
+                // Apply Tough Reload healing if active
+                if (activeSynergySkills.toughReload) {
+                    const effect = activeSynergySkills.toughReload;
+                    player.health = Math.min(player.maxHealth, player.health + effect.healAmount);
+                    updateHUD();
+                }
+                
+                // Apply Sawed-Off Shotgun effect if active
+                if (shopItems.sawedOffShotgun.stacks > 0) {
+                    const bulletCount = 5;
+                    const damagePerBullet = 10 * shopItems.sawedOffShotgun.stacks;
+                    const spreadAngle = 1.2; // Wide spread angle
+                    
+                    for (let i = 0; i < bulletCount; i++) {
+                        const angleVariation = (Math.random() - 0.5) * spreadAngle;
+                        const bullet = {
+                            x: player.x,
+                            y: player.y,
+                            radius: 3,
+                            speed: 8,
+                            angle: player.angle + angleVariation,
+                            damage: damagePerBullet,
+                            isShotgun: true
+                        };
+                        bullets.push(bullet);
+                    }
+                }
+                
+                setTimeout(() => {
+                    player.ammo = player.maxAmmo;
+                    player.reloading = false;
+                    updateHUD();
+                }, player.reloadTime);
+            }
+        }
+        
+        function updateHUD() {
+            healthDisplay.textContent = Math.ceil(player.health);
+            goldDisplay.textContent = player.gold;
+            waveDisplay.textContent = wave;
+            currentAmmoDisplay.textContent = player.ammo;
+            maxAmmoDisplay.textContent = player.maxAmmo;
+        }
+        
+        function endGame() {
+            gameActive = false;
+            gameOver = true;
+            gameOverScreen.style.display = 'flex';
+            finalWaveDisplay.textContent = wave;
+            finalGoldDisplay.textContent = player.gold;
+        }
+        
+        function findNearestEnemy(x, y, excludeEnemies = []) {
+            let nearest = null;
+            let minDistance = Infinity;
+            
+            for (const enemy of enemies) {
+                // Skip excluded enemies
+                if (excludeEnemies.includes(enemy)) continue;
+                
+                const dx = enemy.x - x;
+                const dy = enemy.y - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = enemy;
+                }
+            }
+            
+            return { enemy: nearest, distance: minDistance };
+        }
+        
+        function createRicochetBullet(originX, originY, targetEnemy, damage, bounceCount) {
+            if (!targetEnemy) return;
+            
+            const angle = Math.atan2(targetEnemy.y - originY, targetEnemy.x - originX);
+            
+            const bullet = {
+                x: originX,
+                y: originY,
+                radius: 3,
+                speed: 12,
+                angle: angle,
+                damage: damage,
+                isRicochet: true,
+                bounceCount: bounceCount,
+                hitEnemies: []
+            };
+            
+            bullets.push(bullet);
+        }
+        
+        function createLightningChain(originX, originY, targetEnemy, damage, chainCount) {
+            if (!targetEnemy) return;
+            
+            // Create visual lightning effect (simplified)
+            const lightning = {
+                startX: originX,
+                startY: originY,
+                endX: targetEnemy.x,
+                endY: targetEnemy.y,
+                alpha: 1,
+                duration: 15,
+                color: '#00ffff'
+            };
+            
+            // Apply damage to the target
+            targetEnemy.health -= damage;
+            
+            // Check if enemy is dead
+            if (targetEnemy.health <= 0) {
+                // Apply gold rush bonus if active
+                let goldValue = targetEnemy.value;
+                if (passiveSkillsData.goldRush.level > 0) {
+                    const goldBonus = passiveSkillsData.goldRush.levels[passiveSkillsData.goldRush.level - 1].bonus;
+                    goldValue = Math.ceil(goldValue * (1 + goldBonus));
+                }
+                
+                // Drop gold
+                goldDrops.push({
+                    x: targetEnemy.x,
+                    y: targetEnemy.y,
+                    value: goldValue,
+                    radius: 5
+                });
+                
+                // Remove enemy
+                const index = enemies.indexOf(targetEnemy);
+                if (index > -1) {
+                    enemies.splice(index, 1);
+                    enemiesRemaining--;
+                    
+                    // Check for bullet storm
+                    if (passiveSkillsData.bulletStorm.level > 0) {
+                        const stormChance = passiveSkillsData.bulletStorm.levels[passiveSkillsData.bulletStorm.level - 1].chance;
+                        if (Math.random() < stormChance && player.ammo > 0) {
+                            // Find a random enemy to shoot at
+                            if (enemies.length > 0) {
+                                const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                                const bulletAngle = Math.atan2(randomEnemy.y - player.y, randomEnemy.x - player.x);
+                                createBullet(bulletAngle);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Chain to next enemy if chainCount > 0
+            if (chainCount > 0 && enemies.length > 0) {
+                const excludeList = [targetEnemy];
+                const { enemy: nextTarget, distance } = findNearestEnemy(targetEnemy.x, targetEnemy.y, excludeList);
+                
+                if (nextTarget && distance < 150) {
+                    createLightningChain(targetEnemy.x, targetEnemy.y, nextTarget, damage, chainCount - 1);
+                }
+            }
+        }
+        
+        function createDynamiteExplosion(x, y, damage) {
+            const explosion = {
+                x: x,
+                y: y,
+                radius: 5,
+                maxRadius: 80,
+                growthRate: 4,
+                damage: damage,
+                alpha: 1,
+                hitEnemies: []
+            };
+            
+            dynamiteExplosions.push(explosion);
+        }
+        
+        // Add lightning arc update logic to the update function
+        function update() {
+            if (!gameActive) return;
+            
+            // Update player angle based on mouse position
+            const dx = mouseX - player.x;
+            const dy = mouseY - player.y;
+            player.angle = Math.atan2(dy, dx);
+            
+            // Update dynamite drops with throttling
+            if (passiveSkillsData.dynamiteDrop.level > 0) {
+                const currentTime = Date.now();
+                const dynamiteData = passiveSkillsData.dynamiteDrop.levels[passiveSkillsData.dynamiteDrop.level - 1];
+                
+                // Calculate base interval
+                let interval = dynamiteData.interval;
+                
+                // Apply Dynamite Barrage reduction if active
+                if (activeSynergySkills.dynamiteBarrage) {
+                    interval -= activeSynergySkills.dynamiteBarrage.intervalReduction;
+                }
+                
+                if (currentTime - passiveSkillsData.dynamiteDrop.lastDrop > interval * 1000) {
+                    // Drop dynamite at a random position near enemies
+                    if (enemies.length > 0) {
+                        const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                        createDynamiteExplosion(randomEnemy.x, randomEnemy.y, dynamiteData.damage);
+                        passiveSkillsData.dynamiteDrop.lastDrop = currentTime;
+                    }
+                }
+            }
+            
+            // Update dynamite explosions with optimized collision detection
+            for (let i = dynamiteExplosions.length - 1; i >= 0; i--) {
+                const explosion = dynamiteExplosions[i];
+                
+                // Grow explosion
+                explosion.radius += explosion.growthRate;
+                explosion.alpha -= 0.02;
+                
+                // Only check collisions if explosion is still active
+                if (explosion.alpha > 0) {
+                    // Check for enemy hits with optimized distance check
+                    for (const enemy of enemies) {
+                        if (!explosion.hitEnemies.includes(enemy)) {
+                            const dx = enemy.x - explosion.x;
+                            const dy = enemy.y - explosion.y;
+                            const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                            
+                            if (distance < (explosion.radius + enemy.radius) * (explosion.radius + enemy.radius)) {
+                                enemy.health -= explosion.damage;
+                                explosion.hitEnemies.push(enemy);
+                                
+                                // Check if enemy is dead
+                                if (enemy.health <= 0) {
+                                    handleEnemyDeath(enemy);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Remove explosion if it's too big or faded
+                if (explosion.radius >= explosion.maxRadius || explosion.alpha <= 0) {
+                    dynamiteExplosions.splice(i, 1);
+                }
+            }
+            
+            // Update burning enemies with throttling
+            const currentTime = Date.now();
+            for (let i = burningEnemies.length - 1; i >= 0; i--) {
+                const burning = burningEnemies[i];
+                const elapsedTime = (currentTime - burning.startTime) / 1000;
+                
+                // Apply burn damage every second with throttling
+                if (currentTime - burning.lastDamageTime >= 1000) {
+                    burning.enemy.health -= burning.damage;
+                    burning.lastDamageTime = currentTime;
+                    
+                    // Check if enemy is dead
+                    if (burning.enemy.health <= 0) {
+                        handleEnemyDeath(burning.enemy);
+                        burningEnemies.splice(i, 1);
+                        continue;
+                    }
+                }
+                
+                // Check if burn duration is over
+                if (elapsedTime >= burning.duration) {
+                    burningEnemies.splice(i, 1);
+                }
+            }
+            
+            // Update frozen enemies with throttling
+            for (const enemy of enemies) {
+                if (enemy.frozen && currentTime >= enemy.frozenUntil) {
+                    enemy.frozen = false;
+                }
+            }
+            
+            // Update bullets with optimized collision detection
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.x += Math.cos(bullet.angle) * bullet.speed;
+                bullet.y += Math.sin(bullet.angle) * bullet.speed;
+                
+                // Remove bullets that go off screen
+                if (
+                    bullet.x < 0 ||
+                    bullet.x > canvas.width ||
+                    bullet.y < 0 ||
+                    bullet.y > canvas.height
+                ) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Check for collision with enemies using optimized distance check
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    
+                    // Skip if this bullet already hit this enemy (for piercing)
+                    if (bullet.hitEnemies && bullet.hitEnemies.includes(enemy)) {
+                        continue;
+                    }
+                    
+                    const dx = bullet.x - enemy.x;
+                    const dy = bullet.y - enemy.y;
+                    const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                    
+                    if (distance < (bullet.radius + enemy.radius) * (bullet.radius + enemy.radius)) {
+                        handleBulletHit(bullet, enemy, i, j);
+                    }
+                }
+            }
+            
+            // Update enemies with optimized movement
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                
+                // Skip movement if frozen
+                if (enemy.frozen) continue;
+                
+                // Move towards player with optimized distance calculation
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                
+                if (distance > (player.radius + enemy.radius) * (player.radius + enemy.radius)) {
+                    const speed = enemy.speed / Math.sqrt(distance);
+                    enemy.x += dx * speed;
+                    enemy.y += dy * speed;
+                } else {
+                    // Attack player if not frozen
+                    if (!enemy.frozen) {
+                        if (currentTime - enemy.lastAttack >= enemy.attackCooldown) {
+                            handleEnemyAttack(enemy);
+                        }
+                    }
+                }
+            }
+            
+            // Update gold drops with optimized collection
+            for (let i = goldDrops.length - 1; i >= 0; i--) {
+                const gold = goldDrops[i];
+                const dx = player.x - gold.x;
+                const dy = player.y - gold.y;
+                const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                
+                // Collect gold if player is close enough
+                if (distance < (player.radius + gold.radius + 15) * (player.radius + gold.radius + 15)) {
+                    player.gold += gold.value;
+                    goldDrops.splice(i, 1);
+                    updateHUD();
+                }
+            }
+            
+            // Spawn more enemies if needed with throttling
+            if (waveInProgress && enemies.length < Math.min(5 + wave, 15) && enemiesRemaining > enemies.length) {
+                spawnEnemy();
+            }
+            
+            // Check if wave is complete
+            if (waveInProgress && enemiesRemaining <= 0 && enemies.length === 0) {
+                waveInProgress = false;
+                showWaveNotification("Wave Complete!");
+                
+                // Show shop after every 5 waves
+                if (wave % 5 === 0) {
+                    showShopOptions();
+                } else {
+                    // Show upgrade options after a short delay
+                    setTimeout(() => {
+                        showUpgradeOptions();
+                    }, 1500);
+                }
+            }
+
+            // Update turrets with throttling
+            if (passiveSkillsData.trappersContraption.level > 0) {
+                const skillData = passiveSkillsData.trappersContraption.levels[passiveSkillsData.trappersContraption.level - 1];
+                
+                // Update turret positions to follow player
+                for (let i = 0; i < turrets.length; i++) {
+                    const angle = (Math.PI * 2 * i) / skillData.turrets;
+                    const distance = 100;
+                    turrets[i].x = player.x + Math.cos(angle) * distance;
+                    turrets[i].y = player.y + Math.sin(angle) * distance;
+                    
+                    // Check if turret should shoot with throttling
+                    if (currentTime - turrets[i].lastShot >= skillData.interval * 1000) {
+                        const { enemy: nearestEnemy } = findNearestEnemy(turrets[i].x, turrets[i].y);
+                        
+                        if (nearestEnemy) {
+                            createTurretBullet(turrets[i], nearestEnemy, skillData.damage);
+                            turrets[i].lastShot = currentTime;
+                        }
+                    }
+                }
+            }
+            
+            // Update lightning arcs with optimized collision detection
+            for (let i = lightningArcs.length - 1; i >= 0; i--) {
+                const lightning = lightningArcs[i];
+                
+                // Update positions based on pellet movement
+                lightning.startX = lightning.pellets[0].x;
+                lightning.startY = lightning.pellets[0].y;
+                lightning.endX = lightning.pellets[1].x;
+                lightning.endY = lightning.pellets[1].y;
+                
+                // Fade out
+                lightning.alpha -= 0.05;
+                
+                // Only check collisions if lightning is still active
+                if (lightning.alpha > 0) {
+                    // Check for enemy collisions with optimized line-segment distance check
+                    for (const enemy of enemies) {
+                        const dx = lightning.endX - lightning.startX;
+                        const dy = lightning.endY - lightning.startY;
+                        const lineLength = dx * dx + dy * dy; // Squared length for efficiency
+                        
+                        // Calculate projection of enemy onto line
+                        const t = ((enemy.x - lightning.startX) * dx + (enemy.y - lightning.startY) * dy) / lineLength;
+                        
+                        // If projection is within line segment
+                        if (t >= 0 && t <= 1) {
+                            // Calculate point on line closest to enemy
+                            const projX = lightning.startX + t * dx;
+                            const projY = lightning.startY + t * dy;
+                            
+                            // Calculate squared distance from enemy to line
+                            const distX = enemy.x - projX;
+                            const distY = enemy.y - projY;
+                            const distance = distX * distX + distY * distY;
+                            
+                            // If enemy is close enough to line
+                            if (distance < (enemy.radius + 5) * (enemy.radius + 5)) {
+                                enemy.health -= lightning.damage;
+                                
+                                // Check if enemy is dead
+                                if (enemy.health <= 0) {
+                                    handleEnemyDeath(enemy);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Remove lightning if faded out
+                if (lightning.alpha <= 0) {
+                    lightningArcs.splice(i, 1);
+                }
+            }
+        }
+
+        // Helper functions to handle common operations
+        function handleEnemyDeath(enemy) {
+            // Apply gold rush bonus if active
+            let goldValue = enemy.value;
+            if (passiveSkillsData.goldRush.level > 0) {
+                const goldBonus = passiveSkillsData.goldRush.levels[passiveSkillsData.goldRush.level - 1].bonus;
+                goldValue = Math.ceil(goldValue * (1 + goldBonus));
+            }
+            
+            // Drop gold
+            goldDrops.push({
+                x: enemy.x,
+                y: enemy.y,
+                value: goldValue,
+                radius: 5
+            });
+            
+            // Remove enemy
+            const index = enemies.indexOf(enemy);
+            if (index > -1) {
+                enemies.splice(index, 1);
+                enemiesRemaining--;
+                
+                // Check for bullet storm
+                if (passiveSkillsData.bulletStorm.level > 0) {
+                    const stormChance = passiveSkillsData.bulletStorm.levels[passiveSkillsData.bulletStorm.level - 1].chance;
+                    if (Math.random() < stormChance && player.ammo > 0) {
+                        // Find a random enemy to shoot at
+                        if (enemies.length > 0) {
+                            const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                            const bulletAngle = Math.atan2(randomEnemy.y - player.y, randomEnemy.x - player.x);
+                            
+                            // Apply Storm Surge effect if active
+                            if (activeSynergySkills.stormSurge) {
+                                const effect = activeSynergySkills.stormSurge;
+                                // Create bullet with all base effects and storm surge bonus
+                                createBullet(bulletAngle, effect.damageBonus);
+                            } else {
+                                createBullet(bulletAngle);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleBulletHit(bullet, enemy, bulletIndex, enemyIndex) {
+            // Apply damage
+            let bulletDamage = bullet.damage;
+            
+            // For piercing bullets after first hit
+            if (bullet.pierceCount > 0) {
+                bulletDamage *= bullet.pierceDamageMultiplier;
+            }
+            
+            enemy.health -= bulletDamage;
+            
+            // Apply effects
+            applyBulletEffects(bullet, enemy);
+            
+            // Apply Frostbite Traps effect
+            if (bullet.isTurretBullet && bullet.hasFrostbite) {
+                const effect = activeSynergySkills.frostbiteTraps;
+                enemy.frozen = true;
+                enemy.frozenUntil = Date.now() + (bullet.frostbiteDuration * 1000);
+                enemy.speed *= (1 - effect.slowAmount);
+            }
+            
+            // Check if enemy is dead
+            if (enemy.health <= 0) {
+                handleEnemyDeath(enemy);
+            }
+            
+            // Handle piercing bullets
+            if (bullet.pierceMax > 0 && bullet.pierceCount < bullet.pierceMax) {
+                // Track hit enemies
+                if (!bullet.hitEnemies) bullet.hitEnemies = [];
+                bullet.hitEnemies.push(enemy);
+                bullet.pierceCount++;
+            } else {
+                // Remove bullet unless it's a piercing bullet that can still pierce
+                bullets.splice(bulletIndex, 1);
+            }
+        }
+
+        function handleEnemyAttack(enemy) {
+            const currentTime = Date.now();
+            
+            // Apply damage reduction from Thick Skin and Buffalo Hide Vest
+            let damageTaken = enemy.damage;
+            
+            // Apply Thick Skin reduction
+            if (passiveSkillsData.thickSkin.level > 0) {
+                const reduction = passiveSkillsData.thickSkin.levels[passiveSkillsData.thickSkin.level - 1].reduction;
+                damageTaken *= (1 - reduction);
+            }
+            
+            // Apply Buffalo Hide Vest reduction
+            if (shopItems.buffaloHideVest.stacks > 0) {
+                const vestReduction = 0.1 * shopItems.buffaloHideVest.stacks;
+                damageTaken *= (1 - vestReduction);
+            }
+            
+            player.health -= damageTaken;
+            enemy.lastAttack = currentTime;
+            
+            // Check if player is dead
+            if (player.health <= 0) {
+                endGame();
+            }
+            
+            updateHUD();
+        }
+
+        function createTurretBullet(turret, target, damage) {
+            const bulletAngle = Math.atan2(target.y - turret.y, target.x - turret.x);
+            const bullet = {
+                x: turret.x,
+                y: turret.y,
+                radius: 3,
+                speed: 8,
+                angle: bulletAngle,
+                damage: damage,
+                isTurretBullet: true,
+                hasFrostbite: false,
+                frostbiteDuration: 0,
+                isRicochet: false, // Prevent ricochet
+                isPellet: false, // Prevent scatter pellets
+                hitEnemies: []
+            };
+
+            // Apply Frostbite Traps effect if active
+            if (activeSynergySkills.frostbiteTraps) {
+                const effect = activeSynergySkills.frostbiteTraps;
+                if (Math.random() < effect.chance) {
+                    bullet.hasFrostbite = true;
+                    bullet.frostbiteDuration = effect.duration;
+                }
+            }
+
+            bullets.push(bullet);
+        }
+
+        function applyBulletEffects(bullet, enemy) {
+            const currentTime = Date.now();
+            
+            // Apply frostbite effect
+            if (bullet.hasFrostbite) {
+                enemy.frozen = true;
+                enemy.frozenUntil = currentTime + (bullet.frostbiteDuration * 1000);
+            }
+            
+            // Apply lightning ammo effect
+            if (passiveSkillsData.lightningAmmo.level > 0 && !bullet.isRicochet && !bullet.isPellet) {
+                const lightningData = passiveSkillsData.lightningAmmo.levels[passiveSkillsData.lightningAmmo.level - 1];
+                const chainDamage = bullet.damage * lightningData.damage;
+                
+                // Find nearest enemy to chain to
+                const excludeList = [enemy];
+                const { enemy: chainTarget, distance } = findNearestEnemy(enemy.x, enemy.y, excludeList);
+                
+                if (chainTarget && distance < 150) {
+                    createLightningChain(enemy.x, enemy.y, chainTarget, chainDamage, lightningData.chains - 1);
+                }
+            }
+            
+            // Apply burning bullets effect
+            if (passiveSkillsData.burningBullets.level > 0 && !bullet.isRicochet && !bullet.isPellet) {
+                const burnData = passiveSkillsData.burningBullets.levels[passiveSkillsData.burningBullets.level - 1];
+                
+                // Check if enemy is already burning
+                const existingBurn = burningEnemies.find(burn => burn.enemy === enemy);
+                if (existingBurn) {
+                    // Refresh burn duration
+                    existingBurn.startTime = currentTime;
+                    existingBurn.duration = burnData.duration;
+                    existingBurn.damage = burnData.damage;
+                } else {
+                    // Add new burning effect
+                    burningEnemies.push({
+                        enemy: enemy,
+                        damage: burnData.damage,
+                        duration: burnData.duration,
+                        startTime: currentTime,
+                        lastDamageTime: currentTime
+                    });
+                }
+            }
+            
+            // Apply ricochet effect
+            if (passiveSkillsData.ricochet.level > 0 && !bullet.isRicochet) {
+                const ricochetData = passiveSkillsData.ricochet.levels[passiveSkillsData.ricochet.level - 1];
+                const ricochetDamage = bullet.damage * ricochetData.damage;
+                
+                // Track hit enemies for ricochet
+                const hitEnemies = [enemy];
+                
+                // Find nearest enemy to ricochet to
+                const { enemy: ricochetTarget, distance } = findNearestEnemy(enemy.x, enemy.y, hitEnemies);
+                
+                if (ricochetTarget && distance < 150) {
+                    createRicochetBullet(enemy.x, enemy.y, ricochetTarget, ricochetDamage, ricochetData.bounces - 1);
+                }
+            }
+        }
+        
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw arena border
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#c2a97b';
+            ctx.fill();
+            
+            // Draw some environment details
+            drawEnvironment();
+            
+            // Draw dynamite explosions
+            for (const explosion of dynamiteExplosions) {
+                ctx.beginPath();
+                ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 100, 0, ${explosion.alpha * 0.5})`;
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(explosion.x, explosion.y, explosion.radius * 0.7, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 200, 0, ${explosion.alpha * 0.7})`;
+                ctx.fill();
+            }
+            
+            // Draw gold drops
+            for (const gold of goldDrops) {
+                ctx.beginPath();
+                ctx.arc(gold.x, gold.y, gold.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffd700';
+                ctx.fill();
+            }
+            
+            // Draw enemies
+            for (const enemy of enemies) {
+                // Draw enemy body
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                
+                // Check if enemy is frozen
+                if (enemy.frozen) {
+                    ctx.fillStyle = '#00bfff'; // Light blue for frozen enemies
+                }
+                // Check if enemy is burning
+                else if (burningEnemies.some(burn => burn.enemy === enemy)) {
+                    ctx.fillStyle = '#ff4500'; // Orange-red for burning enemies
+                } else {
+                    ctx.fillStyle = '#8b0000';
+                }
+                
+                ctx.fill();
+                
+                // Draw enemy health bar
+                const healthBarWidth = enemy.radius * 2;
+                const healthPercent = enemy.health / enemy.maxHealth;
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - enemy.radius - 10, healthBarWidth, 5);
+                
+                ctx.fillStyle = '#00cc00';
+                ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - enemy.radius - 10, healthBarWidth * healthPercent, 5);
+                
+                // Draw frozen indicator
+                if (enemy.frozen) {
+                    ctx.beginPath();
+                    ctx.arc(enemy.x, enemy.y, enemy.radius + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#00bfff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Draw snowflake particles
+                    for (let i = 0; i < 4; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = enemy.radius * 0.8;
+                        const x = enemy.x + Math.cos(angle) * distance;
+                        const y = enemy.y + Math.sin(angle) * distance;
+                        
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Draw bullets
+            for (const bullet of bullets) {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                
+                if (bullet.isShotgun) {
+                    ctx.fillStyle = '#ff4500'; // Orange-red for shotgun bullets
+                } else if (bullet.hasFrostbite) {
+                    ctx.fillStyle = '#00bfff'; // Light blue for frostbite bullets
+                    
+                    // Draw icy trail
+                    ctx.beginPath();
+                    ctx.moveTo(bullet.x, bullet.y);
+                    ctx.lineTo(
+                        bullet.x - Math.cos(bullet.angle) * 10,
+                        bullet.y - Math.sin(bullet.angle) * 10
+                    );
+                    ctx.strokeStyle = 'rgba(0, 191, 255, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (bullet.isCritical) {
+                    ctx.fillStyle = '#ff0000'; // Red for critical hits
+                } else if (bullet.isRicochet) {
+                    ctx.fillStyle = '#ffa500'; // Orange for ricochet bullets
+                } else if (bullet.isPellet) {
+                    ctx.fillStyle = '#ffff00'; // Yellow for scatter pellets
+                } else {
+                    ctx.fillStyle = '#000'; // Black for normal bullets
+                }
+                
+                ctx.fill();
+            }
+            
+            // Draw player
+            drawPlayer();
+            
+            // Draw reload indicator
+            if (player.reloading) {
+                // Calculate reload progress
+                const currentTime = Date.now();
+                const elapsedTime = currentTime - player.reloadStartTime;
+                const progress = Math.min(elapsedTime / player.reloadTime, 1);
+                
+                // Draw reload text
+                ctx.font = '14px Courier New';
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.fillText('RELOADING...', player.x, player.y + 40);
+                
+                // Draw reload bar background
+                const barWidth = 60;
+                const barHeight = 8;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(player.x - barWidth / 2, player.y + 45, barWidth, barHeight);
+                
+                // Draw reload progress bar
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(player.x - barWidth / 2, player.y + 45, barWidth * progress, barHeight);
+                
+                // Draw border around the bar
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(player.x - barWidth / 2, player.y + 45, barWidth, barHeight);
+            }
+
+            // Draw turrets
+            for (const turret of turrets) {
+                // Draw turret base
+                ctx.beginPath();
+                ctx.arc(turret.x, turret.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#8b4513';
+                ctx.fill();
+                
+                // Draw turret barrel
+                ctx.beginPath();
+                ctx.arc(turret.x, turret.y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#333';
+                ctx.fill();
+            }
+            
+            // Draw lightning arcs
+            for (const lightning of lightningArcs) {
+                ctx.beginPath();
+                ctx.moveTo(lightning.startX, lightning.startY);
+                ctx.lineTo(lightning.endX, lightning.endY);
+                ctx.strokeStyle = `rgba(0, 255, 255, ${lightning.alpha})`;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Add glow effect
+                ctx.strokeStyle = `rgba(0, 255, 255, ${lightning.alpha * 0.3})`;
+                ctx.lineWidth = 6;
+                ctx.stroke();
+            }
+        }
+        
+        function drawEnvironment() {
+            // Draw some environment details to make the arena look like a town square
+            
+            // Draw a well in the center
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 18, 0, Math.PI * 2);
+            ctx.fillStyle = '#555';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#225';
+            ctx.fill();
+            
+            // Draw some scattered barrels and crates - adjusted for larger arena
+            const obstacles = [
+                { x: canvas.width / 2 - 100, y: canvas.height / 2 - 120, type: 'barrel' },
+                { x: canvas.width / 2 + 150, y: canvas.height / 2 + 100, type: 'barrel' },
+                { x: canvas.width / 2 - 180, y: canvas.height / 2 + 150, type: 'crate' },
+                { x: canvas.width / 2 + 70, y: canvas.height / 2 - 160, type: 'crate' },
+                { x: canvas.width / 2 - 50, y: canvas.height / 2 + 180, type: 'barrel' },
+                { x: canvas.width / 2 + 180, y: canvas.height / 2 - 80, type: 'crate' }
+            ];
+            
+            for (const obstacle of obstacles) {
+                if (obstacle.type === 'barrel') {
+                    ctx.beginPath();
+                    ctx.arc(obstacle.x, obstacle.y, 14, 0, Math.PI * 2);
+                    ctx.fillStyle = '#8b4513';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(obstacle.x, obstacle.y, 12, 0, Math.PI * 2);
+                    ctx.fillStyle = '#a05623';
+                    ctx.fill();
+                } else if (obstacle.type === 'crate') {
+                    ctx.fillStyle = '#a05623';
+                    ctx.fillRect(obstacle.x - 18, obstacle.y - 18, 36, 36);
+                    ctx.fillStyle = '#8b4513';
+                    ctx.fillRect(obstacle.x - 16, obstacle.y - 16, 32, 32);
+                }
+            }
+        }
+        
+        function drawPlayer() {
+            // Draw player body
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#8b4513'; // Brown body color for cowboy
+            ctx.fill();
+            
+            // Draw cowboy vest
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius - 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#a0522d'; // Darker brown for vest
+            ctx.fill();
+            
+            // Draw cowboy hat (wide-brimmed)
+            ctx.beginPath();
+            ctx.ellipse(player.x, player.y - player.radius + 5, player.radius * 1.2, player.radius * 0.5, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#3b3b3b'; // Dark gray for hat
+            ctx.fill();
+            
+            // Draw hat crown
+            ctx.beginPath();
+            ctx.arc(player.x, player.y - player.radius + 5, player.radius * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#2a2a2a'; // Darker gray for hat crown
+            ctx.fill();
+            
+            // Draw hat band
+            ctx.beginPath();
+            ctx.ellipse(player.x, player.y - player.radius + 5, player.radius * 0.55, player.radius * 0.25, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = '#8b0000'; // Red band
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw face (simple)
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = '#d2b48c'; // Tan face color
+            ctx.fill();
+            
+            // Draw player gun (revolver)
+            const gunLength = 25;
+            const gunWidth = 5;
+            
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            
+            // Gun barrel
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, -gunWidth / 2, gunLength, gunWidth);
+            
+            // Gun cylinder
+            ctx.beginPath();
+            ctx.arc(8, 0, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#555';
+            ctx.fill();
+            
+            // Gun handle
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-5, 8);
+            ctx.lineTo(-12, 8);
+            ctx.lineTo(-8, 0);
+            ctx.fillStyle = '#8b4513'; // Brown wooden handle
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Draw bandolier across chest
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(Math.PI / 4); // Diagonal across chest
+            
+            ctx.fillStyle = '#8b4513'; // Brown leather
+            ctx.fillRect(-player.radius, -2, player.radius * 2, 4);
+            
+            // Draw bullet casings on bandolier
+            for (let i = -4; i <= 4; i++) {
+                if (i !== 0) { // Skip center
+                    ctx.beginPath();
+                    ctx.arc(i * 5, 0, 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffd700'; // Gold bullet casings
+                    ctx.fill();
+                }
+            }
+            
+            ctx.restore();
+            
+            // Draw health bar
+            const healthBarWidth = player.radius * 2;
+            const healthPercent = player.health / player.maxHealth;
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(player.x - healthBarWidth / 2, player.y - player.radius - 15, healthBarWidth, 5);
+            
+            ctx.fillStyle = '#00cc00';
+            ctx.fillRect(player.x - healthBarWidth / 2, player.y - player.radius - 15, healthBarWidth * healthPercent, 5);
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize game
+        updateHUD();
+
+        // Shop items
+        const shopItems = {
+            chewingGrit: {
+                name: "Chewing Grit",
+                description: "Boosts your health pool with the toughness of tobacco grit.",
+                flavor: "Tobacco chew keeps ya standin'.",
+                basePrice: 200,
+                stacks: 0,
+                maxStacks: Infinity,
+                effect: () => {
+                    player.maxHealth += 5;
+                    player.health += 5;
+                    updateHUD();
+                }
+            },
+            buffaloHideVest: {
+                name: "Buffalo Hide Vest",
+                description: "Reduces damage taken.",
+                flavor: "Thick hide, tougher heart.",
+                basePrice: 500,
+                stacks: 0,
+                maxStacks: 3,
+                effect: () => {
+                    // Damage reduction is handled in handleEnemyAttack
+                }
+            },
+            sawedOffShotgun: {
+                name: "Sawed-Off Shotgun",
+                description: "Reloading fires a burst of bullets in a wide spread.",
+                flavor: "Close quarters chaos.",
+                basePrice: 800,
+                stacks: 0,
+                maxStacks: 3,
+                effect: () => {
+                    // Effect is handled in reload function
+                }
+            },
+            banditsBandolier: {
+                name: "Bandit's Bandolier",
+                description: "Increases ammo capacity.",
+                flavor: "More lead to sling.",
+                basePrice: 350,
+                stacks: 0,
+                maxStacks: 3,
+                effect: () => {
+                    player.maxAmmo = 6 + (shopItems.banditsBandolier.stacks * 3);
+                    player.ammo = player.maxAmmo;
+                    updateHUD();
+                }
+            }
+        };
+
+        function getItemPrice(item) {
+            return item.basePrice;
+        }
+
+        function showShopOptions() {
+            gameActive = false;
+            
+            // Collect all gold before showing shop screen
+            collectAllGold();
+            
+            // Show shop screen after a short delay to allow gold collection animation
+            setTimeout(() => {
+                document.getElementById('shopScreen').style.display = 'flex';
+                
+                // Clear previous options
+                shopOptions.innerHTML = '';
+                
+                // Create 5 random items (can be duplicates)
+                const selectedItems = [];
+                const itemIds = Object.keys(shopItems);
+                
+                for (let i = 0; i < 5; i++) {
+                    const randomIndex = Math.floor(Math.random() * itemIds.length);
+                    const itemId = itemIds[randomIndex];
+                    const item = { ...shopItems[itemId], id: itemId };
+                    selectedItems.push(item);
+                }
+                
+                // Create shop options
+                selectedItems.forEach(item => {
+                    const option = document.createElement('div');
+                    option.className = 'shopOption';
+                    option.dataset.itemId = item.id;
+                    
+                    const currentPrice = getItemPrice(item);
+                    
+                    option.innerHTML = `
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                        <p><i>"${item.flavor}"</i></p>
+                        <div class="shopPrice">Price: ${currentPrice} Gold</div>
+                        <div class="stacks">Stacks: ${item.stacks}/${item.maxStacks === Infinity ? '∞' : item.maxStacks}</div>
+                    `;
+                    
+                    // Disable the option if player can't afford it or item is maxed
+                    if (player.gold < currentPrice || item.stacks >= item.maxStacks) {
+                        option.classList.add('disabled');
+                    }
+                    
+                    option.addEventListener('click', () => {
+                        purchaseItem(item.id, option);
+                    });
+                    
+                    shopOptions.appendChild(option);
+                });
+                
+                // Add a "Continue" button
+                const continueButton = document.createElement('button');
+                continueButton.textContent = 'Continue';
+                continueButton.addEventListener('click', () => {
+                    document.getElementById('shopScreen').style.display = 'none';
+                    showUpgradeOptions();
+                });
+                shopOptions.appendChild(continueButton);
+            }, 1000);
+        }
+
+        function purchaseItem(itemId, optionElement) {
+            const item = shopItems[itemId];
+            const currentPrice = getItemPrice(item);
+            
+            if (player.gold >= currentPrice && item.stacks < item.maxStacks) {
+                player.gold -= currentPrice;
+                item.stacks++;
+                item.effect();
+                
+                // Update HUD
+                updateHUD();
+                
+                // Mark this specific option as sold out
+                optionElement.classList.add('disabled');
+                optionElement.innerHTML = `
+                    <h3>${item.name}</h3>
+                    <p>SOLD OUT</p>
+                `;
+            }
+        }
+
+        function showSynergyOptions() {
+            gameActive = false;
+            
+            // Collect all gold before showing synergy screen
+            collectAllGold();
+            
+            // Show synergy screen after a short delay
+            setTimeout(() => {
+                upgradeScreen.style.display = 'flex';
+                
+                // Clear previous options
+                upgradeOptions.innerHTML = '';
+                
+                // Get available synergy skills based on owned skills
+                const availableSynergies = [];
+                for (const [synergyId, synergy] of Object.entries(synergySkillsData)) {
+                    if (!activeSynergySkills[synergyId]) {
+                        const hasRequiredSkills = synergy.requiredSkills.every(skillId => 
+                            passiveSkillsData[skillId].level > 0
+                        );
+                        
+                        if (hasRequiredSkills && Math.random() < 0.1) { // 10% chance for synergy
+                            availableSynergies.push({
+                                id: synergyId,
+                                ...synergy
+                            });
+                        }
+                    }
+                }
+                
+                // Randomly select 3 available synergies
+                const selectedSynergies = [];
+                while (selectedSynergies.length < 3 && availableSynergies.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableSynergies.length);
+                    selectedSynergies.push(availableSynergies[randomIndex]);
+                    availableSynergies.splice(randomIndex, 1);
+                }
+                
+                if (selectedSynergies.length > 0) {
+                    // Create synergy options
+                    selectedSynergies.forEach(synergy => {
+                        const option = document.createElement('div');
+                        option.className = 'upgradeOption';
+                        option.dataset.synergyId = synergy.id;
+                        
+                        // Calculate effect based on current skill levels
+                        const skillLevels = synergy.requiredSkills.map(skillId => 
+                            passiveSkillsData[skillId].level
+                        );
+                        const effect = synergy.effect(...skillLevels);
+                        
+                        let effectDescription = '';
+                        switch (synergy.id) {
+                            case 'thunderBuckshot':
+                                effectDescription = `${effect.damage} damage per pellet + ${effect.bonus * 100}% bonus`;
+                                break;
+                        }
+                        
+                        option.innerHTML = `
+                            <h3>${synergy.name}</h3>
+                            <p>${synergy.description}</p>
+                            <p><i>"${synergy.flavor}"</i></p>
+                            <p>${effectDescription}</p>
+                            <div class="upgradeLevel">Synergy Effect</div>
+                        `;
+                        
+                        option.addEventListener('click', () => {
+                            selectSynergy(synergy.id);
+                        });
+                        
+                        upgradeOptions.appendChild(option);
+                    });
+                } else {
+                    // No available synergies, give gold bonus
+                    const goldBonus = 50;
+                    player.gold += goldBonus;
+                    showWaveNotification(`No synergies available. +${goldBonus} Gold!`);
+                    updateHUD();
+                    startNextWave();
+                }
+            }, 1000);
+        }
+        
+        function selectSynergy(synergyId) {
+            const synergy = synergySkillsData[synergyId];
+            activeSynergySkills[synergyId] = true;
+            
+            // Apply synergy effect
+            const skillLevels = synergy.requiredSkills.map(skillId => 
+                passiveSkillsData[skillId].level
+            );
+            const effect = synergy.effect(...skillLevels);
+            
+            // Store the effect for use in combat
+            activeSynergySkills[synergyId] = effect;
+            
+            showWaveNotification(`Synergy Unlocked: ${synergy.name}!`);
+            startNextWave();
+        }
+
+        // Add testing panel HTML
+        const testingPanel = document.createElement('div');
+        testingPanel.id = 'testingPanel';
+        testingPanel.innerHTML = `
+            <div class="testingSection">
+                <h3>Passive Skills</h3>
+                <div id="passiveSkillsTesting"></div>
+            </div>
+            <div class="testingSection">
+                <h3>Synergy Skills</h3>
+                <div id="synergySkillsTesting"></div>
+            </div>
+            <button id="resetTesting">Reset All Skills</button>
+        `;
+        document.body.appendChild(testingPanel);
+
+        // Add testing panel functionality
+        let testingMode = false;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 't') {
+                testingMode = !testingMode;
+                testingPanel.style.display = testingMode ? 'block' : 'none';
+                if (testingMode) {
+                    updateTestingPanel();
+                }
+            }
+        });
+
+        function updateTestingPanel() {
+            const passiveSkillsContainer = document.getElementById('passiveSkillsTesting');
+            const synergySkillsContainer = document.getElementById('synergySkillsTesting');
+            
+            // Clear existing options
+            passiveSkillsContainer.innerHTML = '';
+            synergySkillsContainer.innerHTML = '';
+            
+            // Add passive skills options
+            for (const [skillId, skill] of Object.entries(passiveSkillsData)) {
+                const option = document.createElement('div');
+                option.className = `testingOption ${skill.level >= skill.maxLevel ? 'disabled' : ''}`;
+                
+                option.innerHTML = `
+                    <span>${skill.name} (${skill.level}/${skill.maxLevel})</span>
+                    <button class="add" ${skill.level >= skill.maxLevel ? 'disabled' : ''}>Add Level</button>
+                    <button class="remove" ${skill.level <= 0 ? 'disabled' : ''}>Remove Level</button>
+                `;
+                
+                option.querySelector('.add').addEventListener('click', () => {
+                    if (skill.level < skill.maxLevel) {
+                        skill.level++;
+                        applySkillEffects(skillId);
+                        updateSynergyEffects(skillId);
+                        updatePassiveSkillsDisplay();
+                        updateTestingPanel();
+                    }
+                });
+                
+                option.querySelector('.remove').addEventListener('click', () => {
+                    if (skill.level > 0) {
+                        skill.level--;
+                        // Reset skill effects
+                        resetSkillEffects(skillId);
+                        updateSynergyEffects(skillId);
+                        updatePassiveSkillsDisplay();
+                        updateTestingPanel();
+                    }
+                });
+                
+                passiveSkillsContainer.appendChild(option);
+            }
+            
+            // Add synergy skills options
+            for (const [synergyId, synergy] of Object.entries(synergySkillsData)) {
+                const option = document.createElement('div');
+                const isActive = activeSynergySkills[synergyId];
+                option.className = `testingOption ${isActive ? 'active' : ''}`;
+                
+                option.innerHTML = `
+                    <span>${synergy.name}</span>
+                    <button class="${isActive ? 'remove' : 'add'}">${isActive ? 'Remove' : 'Add'}</button>
+                `;
+                
+                option.querySelector('button').addEventListener('click', () => {
+                    if (isActive) {
+                        delete activeSynergySkills[synergyId];
+                        showWaveNotification(`Removed Synergy: ${synergy.name}`);
+                    } else {
+                        // Check if required skills are present
+                        const hasRequiredSkills = synergy.requiredSkills.every(skillId => 
+                            passiveSkillsData[skillId].level > 0
+                        );
+                        
+                        if (hasRequiredSkills) {
+                            const skillLevels = synergy.requiredSkills.map(skillId => 
+                                passiveSkillsData[skillId].level
+                            );
+                            const effect = synergy.effect(...skillLevels);
+                            activeSynergySkills[synergyId] = effect;
+                            showWaveNotification(`Added Synergy: ${synergy.name}`);
+                        } else {
+                            showWaveNotification('Required skills not present!');
+                        }
+                    }
+                    updateTestingPanel();
+                });
+                
+                synergySkillsContainer.appendChild(option);
+            }
+        }
+
+        function resetSkillEffects(skillId) {
+            const skill = passiveSkillsData[skillId];
+            
+            switch (skillId) {
+                case 'healthBoost':
+                    player.maxHealth = 100;
+                    player.health = Math.min(player.health, player.maxHealth);
+                    break;
+                case 'ammoCapacity':
+                    player.maxAmmo = 6;
+                    player.ammo = Math.min(player.ammo, player.maxAmmo);
+                    break;
+                case 'reloadSpeed':
+                    player.baseReloadTime = 1500;
+                    player.reloadTime = player.baseReloadTime;
+                    break;
+                case 'fireRate':
+                    player.shotCooldown = 300;
+                    break;
+                case 'trappersContraption':
+                    turrets = [];
+                    break;
+            }
+            
+            updateHUD();
+        }
+
+        // Add reset button functionality
+        document.getElementById('resetTesting').addEventListener('click', () => {
+            // Reset all passive skills
+            for (const [skillId, skill] of Object.entries(passiveSkillsData)) {
+                skill.level = 0;
+                resetSkillEffects(skillId);
+            }
+            
+            // Reset all synergy skills
+            activeSynergySkills = {};
+            
+            // Update displays
+            updatePassiveSkillsDisplay();
+            updateHUD();
+            updateTestingPanel();
+            showWaveNotification('All skills reset!');
+        });
+    </script>
+
+<script>
+  (function() {
+    var hasInteracted = false;
+    function sendInteractionOnce() {
+      if (!hasInteracted) {
+        hasInteracted = true;
+        window.parent.postMessage({ type: 'game_interaction' }, '*');
+      }
+    }
+
+    window.addEventListener('mousedown', sendInteractionOnce, { once: true });
+    window.addEventListener('touchstart', sendInteractionOnce, { once: true });
+    window.addEventListener('keydown', sendInteractionOnce, { once: true });
+  })();
+</script>
+</body>
+</html>
