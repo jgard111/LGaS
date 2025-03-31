@@ -1086,176 +1086,159 @@
         }
         
         function collectAllGold() {
-            let totalCollected = 0;
-            
-            // Animation frames for gold collection
-            const frames = 20;
-            let currentFrame = 0;
-            
-            // Save original positions for animation
-            const originalPositions = goldDrops.map(gold => ({
-                x: gold.x,
-                y: gold.y,
-                value: gold.value
-            }));
-            
-            // Total gold value to collect
+            // Collect all gold drops immediately
             for (const gold of goldDrops) {
-                totalCollected += gold.value;
+                player.gold += gold.value;
             }
-            
-            // Show notification about gold collection
-            if (totalCollected > 0) {
-                showWaveNotification(`Collected ${totalCollected} Gold!`);
-            }
-            
-            // Animate gold collection
-            function animateGoldCollection() {
-                if (currentFrame < frames) {
-                    // Update gold positions to move toward player
-                    for (let i = 0; i < goldDrops.length; i++) {
-                        const gold = goldDrops[i];
-                        const original = originalPositions[i];
-                        
-                        // Calculate progress (0 to 1)
-                        const progress = currentFrame / frames;
-                        
-                        // Move gold toward player with easing
-                        gold.x = original.x + (player.x - original.x) * progress;
-                        gold.y = original.y + (player.y - original.y) * progress;
-                    }
-                    
-                    currentFrame++;
-                    requestAnimationFrame(animateGoldCollection);
-                } else {
-                    // Add gold to player and clear gold drops
-                    player.gold += totalCollected;
-                    goldDrops = [];
-                    updateHUD();
-                }
-            }
-            
-            // Start animation if there's gold to collect
-            if (goldDrops.length > 0) {
-                animateGoldCollection();
-            }
+            goldDrops = [];
+            updateHUD();
         }
         
         function showUpgradeOptions() {
             gameActive = false;
             
-            // Collect all gold before showing upgrade screen
+            // Collect all gold immediately
             collectAllGold();
             
-            // Show upgrade screen after a short delay to allow gold collection animation
-            setTimeout(() => {
-                upgradeScreen.style.display = 'flex';
-                
-                // Clear previous options
-                upgradeOptions.innerHTML = '';
-                
-                // Get available skills (not maxed out)
-                const availableSkills = Object.keys(passiveSkillsData).filter(
-                    skillId => passiveSkillsData[skillId].level < passiveSkillsData[skillId].maxLevel
-                );
-                
-                // Check for available synergies
-                const availableSynergies = [];
-                for (const [synergyId, synergy] of Object.entries(synergySkillsData)) {
-                    if (!activeSynergySkills[synergyId]) {
-                        const hasRequiredSkills = synergy.requiredSkills.every(skillId => 
-                            passiveSkillsData[skillId].level > 0
-                        );
-                        
-                        if (hasRequiredSkills && Math.random() < 0.1) { // 10% chance for synergy
-                            availableSynergies.push({
-                                id: synergyId,
-                                ...synergy
-                            });
+            // Show upgrade screen
+            upgradeScreen.style.display = 'flex';
+            
+            // Clear previous options
+            upgradeOptions.innerHTML = '';
+            
+            // Get available skills (not maxed out)
+            const availableSkills = Object.keys(passiveSkillsData).filter(
+                skillId => passiveSkillsData[skillId].level < passiveSkillsData[skillId].maxLevel
+            );
+            
+            // Check for available synergies
+            const availableSynergies = [];
+            for (const [synergyId, synergy] of Object.entries(synergySkillsData)) {
+                if (!activeSynergySkills[synergyId]) {
+                    const hasRequiredSkills = synergy.requiredSkills.every(skillId => 
+                        passiveSkillsData[skillId].level > 0
+                    );
+                    
+                    if (hasRequiredSkills && Math.random() < 0.1) { // 10% chance for synergy
+                        availableSynergies.push({
+                            id: synergyId,
+                            ...synergy
+                        });
+                    }
+                }
+            }
+            
+            // Randomly select skills and synergies
+            const selectedOptions = [];
+            
+            // Add available synergies first
+            while (selectedOptions.length < 3 && availableSynergies.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableSynergies.length);
+                selectedOptions.push({
+                    type: 'synergy',
+                    data: availableSynergies[randomIndex]
+                });
+                availableSynergies.splice(randomIndex, 1);
+            }
+            
+            // Fill remaining slots with regular skills
+            while (selectedOptions.length < 3 && availableSkills.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableSkills.length);
+                selectedOptions.push({
+                    type: 'skill',
+                    data: availableSkills[randomIndex]
+                });
+                availableSkills.splice(randomIndex, 1);
+            }
+            
+            // If no options available, add the fallback health upgrade
+            if (selectedOptions.length === 0) {
+                selectedOptions.push({
+                    type: 'fallback',
+                    data: {
+                        name: "Vitality Boost",
+                        description: "Increases your maximum health by 10.",
+                        flavor: "A little extra grit never hurt.",
+                        effect: () => {
+                            player.maxHealth += 10;
+                            player.health += 10;
+                            updateHUD();
                         }
                     }
-                }
-                
-                // Randomly select skills and synergies
-                const selectedOptions = [];
-                
-                // Add available synergies first
-                while (selectedOptions.length < 3 && availableSynergies.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * availableSynergies.length);
-                    selectedOptions.push({
-                        type: 'synergy',
-                        data: availableSynergies[randomIndex]
-                    });
-                    availableSynergies.splice(randomIndex, 1);
-                }
-                
-                // Fill remaining slots with regular skills
-                while (selectedOptions.length < 3 && availableSkills.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * availableSkills.length);
-                    selectedOptions.push({
-                        type: 'skill',
-                        data: availableSkills[randomIndex]
-                    });
-                    availableSkills.splice(randomIndex, 1);
-                }
-                
-                // Create upgrade options
-                selectedOptions.forEach(option => {
-                    const optionElement = document.createElement('div');
-                    optionElement.className = 'upgradeOption';
-                    
-                    if (option.type === 'synergy') {
-                        const synergy = option.data;
-                        optionElement.dataset.synergyId = synergy.id;
-                        optionElement.style.borderColor = '#ffd700'; // Golden border for synergies
-                        
-                        // Calculate effect based on current skill levels
-                        const skillLevels = synergy.requiredSkills.map(skillId => 
-                            passiveSkillsData[skillId].level
-                        );
-                        const effect = synergy.effect(...skillLevels);
-                        
-                        optionElement.innerHTML = `
-                            <h3>${synergy.name}</h3>
-                            <p>${synergy.description}</p>
-                            <p><i>"${synergy.flavor}"</i></p>
-                            <p>${effect.damage} damage per pellet + ${effect.bonus * 100}% bonus</p>
-                            <div class="upgradeLevel">Synergy Effect</div>
-                        `;
-                        
-                        optionElement.addEventListener('click', () => {
-                            selectSynergy(synergy.id);
-                        });
-                    } else {
-                        const skillId = option.data;
-                        const skill = passiveSkillsData[skillId];
-                        const currentLevel = skill.level;
-                        const nextLevel = currentLevel + 1;
-                        const levelData = skill.levels[nextLevel - 1];
-                        
-                        optionElement.dataset.skillId = skillId;
-                        
-                        const levelDescription = getSkillLevelDescription(skillId, nextLevel);
-                        
-                        optionElement.innerHTML = `
-                            <h3>${skill.name}</h3>
-                            <p>${skill.description}</p>
-                            <p><i>"${skill.flavor}"</i></p>
-                            <p>${levelDescription}</p>
-                            <div class="upgradeLevel">Level ${currentLevel} → ${nextLevel}</div>
-                            <div class="upgradeLevelDots">
-                                ${createLevelDots(currentLevel, nextLevel, skill.maxLevel)}
-                            </div>
-                        `;
-                        
-                        optionElement.addEventListener('click', () => {
-                            selectUpgrade(skillId);
-                        });
-                    }
-                    
-                    upgradeOptions.appendChild(optionElement);
                 });
-            }, 1000);
+            }
+            
+            // Create upgrade options
+            selectedOptions.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'upgradeOption';
+                
+                if (option.type === 'synergy') {
+                    const synergy = option.data;
+                    optionElement.dataset.synergyId = synergy.id;
+                    optionElement.style.borderColor = '#ffd700'; // Golden border for synergies
+                    
+                    // Calculate effect based on current skill levels
+                    const skillLevels = synergy.requiredSkills.map(skillId => 
+                        passiveSkillsData[skillId].level
+                    );
+                    const effect = synergy.effect(...skillLevels);
+                    
+                    optionElement.innerHTML = `
+                        <h3>${synergy.name}</h3>
+                        <p>${synergy.description}</p>
+                        <p><i>"${synergy.flavor}"</i></p>
+                        <p>${effect.damage} damage per pellet + ${effect.bonus * 100}% bonus</p>
+                        <div class="upgradeLevel">Synergy Effect</div>
+                    `;
+                    
+                    optionElement.addEventListener('click', () => {
+                        selectSynergy(synergy.id);
+                    });
+                } else if (option.type === 'fallback') {
+                    const fallback = option.data;
+                    optionElement.style.borderColor = '#ff69b4'; // Pink border for fallback option
+                    
+                    optionElement.innerHTML = `
+                        <h3>${fallback.name}</h3>
+                        <p>${fallback.description}</p>
+                        <p><i>"${fallback.flavor}"</i></p>
+                        <div class="upgradeLevel">Fallback Upgrade</div>
+                    `;
+                    
+                    optionElement.addEventListener('click', () => {
+                        fallback.effect();
+                        startNextWave();
+                    });
+                } else {
+                    const skillId = option.data;
+                    const skill = passiveSkillsData[skillId];
+                    const currentLevel = skill.level;
+                    const nextLevel = currentLevel + 1;
+                    const levelData = skill.levels[nextLevel - 1];
+                    
+                    optionElement.dataset.skillId = skillId;
+                    
+                    const levelDescription = getSkillLevelDescription(skillId, nextLevel);
+                    
+                    optionElement.innerHTML = `
+                        <h3>${skill.name}</h3>
+                        <p>${skill.description}</p>
+                        <p><i>"${skill.flavor}"</i></p>
+                        <p>${levelDescription}</p>
+                        <div class="upgradeLevel">Level ${currentLevel} → ${nextLevel}</div>
+                        <div class="upgradeLevelDots">
+                            ${createLevelDots(currentLevel, nextLevel, skill.maxLevel)}
+                        </div>
+                    `;
+                    
+                    optionElement.addEventListener('click', () => {
+                        selectUpgrade(skillId);
+                    });
+                }
+                
+                upgradeOptions.appendChild(optionElement);
+            });
         }
         
         function createLevelDots(currentLevel, nextLevel, maxLevel) {
@@ -1374,7 +1357,14 @@
                     player.health += (player.maxHealth - oldMaxHealth);
                     break;
                 case 'ammoCapacity':
-                    player.maxAmmo = 6 + levelData.bonus;
+                    // Calculate total ammo bonus from both skill and item
+                    let totalSkillBonus = 0;
+                    // Sum up all previous level bonuses
+                    for (let i = 0; i < level; i++) {
+                        totalSkillBonus += skill.levels[i].bonus;
+                    }
+                    const itemBonus = shopItems.banditsBandolier.stacks * 3;
+                    player.maxAmmo = 6 + totalSkillBonus + itemBonus;
                     break;
                 case 'reloadSpeed':
                     player.baseReloadTime = 1500 / (1 + levelData.bonus);
@@ -1815,6 +1805,8 @@
         function update() {
             if (!gameActive) return;
             
+            const currentTime = Date.now();
+            
             // Update player angle based on mouse position
             const dx = mouseX - player.x;
             const dy = mouseY - player.y;
@@ -1822,19 +1814,14 @@
             
             // Update dynamite drops with throttling
             if (passiveSkillsData.dynamiteDrop.level > 0) {
-                const currentTime = Date.now();
                 const dynamiteData = passiveSkillsData.dynamiteDrop.levels[passiveSkillsData.dynamiteDrop.level - 1];
-                
-                // Calculate base interval
                 let interval = dynamiteData.interval;
                 
-                // Apply Dynamite Barrage reduction if active
                 if (activeSynergySkills.dynamiteBarrage) {
                     interval -= activeSynergySkills.dynamiteBarrage.intervalReduction;
                 }
                 
                 if (currentTime - passiveSkillsData.dynamiteDrop.lastDrop > interval * 1000) {
-                    // Drop dynamite at a random position near enemies
                     if (enemies.length > 0) {
                         const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
                         createDynamiteExplosion(randomEnemy.x, randomEnemy.y, dynamiteData.damage);
@@ -1846,25 +1833,26 @@
             // Update dynamite explosions with optimized collision detection
             for (let i = dynamiteExplosions.length - 1; i >= 0; i--) {
                 const explosion = dynamiteExplosions[i];
-                
-                // Grow explosion
                 explosion.radius += explosion.growthRate;
                 explosion.alpha -= 0.02;
                 
-                // Only check collisions if explosion is still active
                 if (explosion.alpha > 0) {
-                    // Check for enemy hits with optimized distance check
-                    for (const enemy of enemies) {
+                    // Use squared distance for efficiency
+                    const explosionRadiusSquared = (explosion.radius + 15) * (explosion.radius + 15);
+                    
+                    // Create a copy of enemies array to avoid modification during iteration
+                    const currentEnemies = [...enemies];
+                    
+                    for (const enemy of currentEnemies) {
                         if (!explosion.hitEnemies.includes(enemy)) {
                             const dx = enemy.x - explosion.x;
                             const dy = enemy.y - explosion.y;
-                            const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                            const distanceSquared = dx * dx + dy * dy;
                             
-                            if (distance < (explosion.radius + enemy.radius) * (explosion.radius + enemy.radius)) {
+                            if (distanceSquared < explosionRadiusSquared) {
                                 enemy.health -= explosion.damage;
                                 explosion.hitEnemies.push(enemy);
                                 
-                                // Check if enemy is dead
                                 if (enemy.health <= 0) {
                                     handleEnemyDeath(enemy);
                                 }
@@ -1873,24 +1861,20 @@
                     }
                 }
                 
-                // Remove explosion if it's too big or faded
                 if (explosion.radius >= explosion.maxRadius || explosion.alpha <= 0) {
                     dynamiteExplosions.splice(i, 1);
                 }
             }
             
             // Update burning enemies with throttling
-            const currentTime = Date.now();
             for (let i = burningEnemies.length - 1; i >= 0; i--) {
                 const burning = burningEnemies[i];
                 const elapsedTime = (currentTime - burning.startTime) / 1000;
                 
-                // Apply burn damage every second with throttling
                 if (currentTime - burning.lastDamageTime >= 1000) {
                     burning.enemy.health -= burning.damage;
                     burning.lastDamageTime = currentTime;
                     
-                    // Check if enemy is dead
                     if (burning.enemy.health <= 0) {
                         handleEnemyDeath(burning.enemy);
                         burningEnemies.splice(i, 1);
@@ -1898,7 +1882,6 @@
                     }
                 }
                 
-                // Check if burn duration is over
                 if (elapsedTime >= burning.duration) {
                     burningEnemies.splice(i, 1);
                 }
@@ -1918,30 +1901,29 @@
                 bullet.y += Math.sin(bullet.angle) * bullet.speed;
                 
                 // Remove bullets that go off screen
-                if (
-                    bullet.x < 0 ||
-                    bullet.x > canvas.width ||
-                    bullet.y < 0 ||
-                    bullet.y > canvas.height
-                ) {
+                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
                     bullets.splice(i, 1);
                     continue;
                 }
                 
-                // Check for collision with enemies using optimized distance check
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    const enemy = enemies[j];
+                // Use squared distance for efficiency
+                const bulletRadiusSquared = (bullet.radius + 15) * (bullet.radius + 15);
+                
+                // Create a copy of enemies array to avoid modification during iteration
+                const currentEnemies = [...enemies];
+                
+                for (let j = 0; j < currentEnemies.length; j++) {
+                    const enemy = currentEnemies[j];
                     
-                    // Skip if this bullet already hit this enemy (for piercing)
                     if (bullet.hitEnemies && bullet.hitEnemies.includes(enemy)) {
                         continue;
                     }
                     
                     const dx = bullet.x - enemy.x;
                     const dy = bullet.y - enemy.y;
-                    const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                    const distanceSquared = dx * dx + dy * dy;
                     
-                    if (distance < (bullet.radius + enemy.radius) * (bullet.radius + enemy.radius)) {
+                    if (distanceSquared < bulletRadiusSquared) {
                         handleBulletHit(bullet, enemy, i, j);
                     }
                 }
@@ -1951,37 +1933,30 @@
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
                 
-                // Skip movement if frozen
                 if (enemy.frozen) continue;
                 
-                // Move towards player with optimized distance calculation
                 const dx = player.x - enemy.x;
                 const dy = player.y - enemy.y;
-                const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                const distanceSquared = dx * dx + dy * dy;
                 
-                if (distance > (player.radius + enemy.radius) * (player.radius + enemy.radius)) {
-                    const speed = enemy.speed / Math.sqrt(distance);
+                if (distanceSquared > (player.radius + enemy.radius) * (player.radius + enemy.radius)) {
+                    const speed = enemy.speed / Math.sqrt(distanceSquared);
                     enemy.x += dx * speed;
                     enemy.y += dy * speed;
-                } else {
-                    // Attack player if not frozen
-                    if (!enemy.frozen) {
-                        if (currentTime - enemy.lastAttack >= enemy.attackCooldown) {
-                            handleEnemyAttack(enemy);
-                        }
-                    }
+                } else if (!enemy.frozen && currentTime - enemy.lastAttack >= enemy.attackCooldown) {
+                    handleEnemyAttack(enemy);
                 }
             }
             
             // Update gold drops with optimized collection
+            const collectionRadiusSquared = (player.radius + 20) * (player.radius + 20);
             for (let i = goldDrops.length - 1; i >= 0; i--) {
                 const gold = goldDrops[i];
                 const dx = player.x - gold.x;
                 const dy = player.y - gold.y;
-                const distance = dx * dx + dy * dy; // Squared distance for efficiency
+                const distanceSquared = dx * dx + dy * dy;
                 
-                // Collect gold if player is close enough
-                if (distance < (player.radius + gold.radius + 15) * (player.radius + gold.radius + 15)) {
+                if (distanceSquared < collectionRadiusSquared) {
                     player.gold += gold.value;
                     goldDrops.splice(i, 1);
                     updateHUD();
@@ -1998,11 +1973,9 @@
                 waveInProgress = false;
                 showWaveNotification("Wave Complete!");
                 
-                // Show shop after every 5 waves
                 if (wave % 5 === 0) {
                     showShopOptions();
                 } else {
-                    // Show upgrade options after a short delay
                     setTimeout(() => {
                         showUpgradeOptions();
                     }, 1500);
@@ -2013,14 +1986,12 @@
             if (passiveSkillsData.trappersContraption.level > 0) {
                 const skillData = passiveSkillsData.trappersContraption.levels[passiveSkillsData.trappersContraption.level - 1];
                 
-                // Update turret positions to follow player
                 for (let i = 0; i < turrets.length; i++) {
                     const angle = (Math.PI * 2 * i) / skillData.turrets;
                     const distance = 100;
                     turrets[i].x = player.x + Math.cos(angle) * distance;
                     turrets[i].y = player.y + Math.sin(angle) * distance;
                     
-                    // Check if turret should shoot with throttling
                     if (currentTime - turrets[i].lastShot >= skillData.interval * 1000) {
                         const { enemy: nearestEnemy } = findNearestEnemy(turrets[i].x, turrets[i].y);
                         
@@ -2036,42 +2007,33 @@
             for (let i = lightningArcs.length - 1; i >= 0; i--) {
                 const lightning = lightningArcs[i];
                 
-                // Update positions based on pellet movement
                 lightning.startX = lightning.pellets[0].x;
                 lightning.startY = lightning.pellets[0].y;
                 lightning.endX = lightning.pellets[1].x;
                 lightning.endY = lightning.pellets[1].y;
-                
-                // Fade out
                 lightning.alpha -= 0.05;
                 
-                // Only check collisions if lightning is still active
                 if (lightning.alpha > 0) {
-                    // Check for enemy collisions with optimized line-segment distance check
-                    for (const enemy of enemies) {
-                        const dx = lightning.endX - lightning.startX;
-                        const dy = lightning.endY - lightning.startY;
-                        const lineLength = dx * dx + dy * dy; // Squared length for efficiency
+                    const dx = lightning.endX - lightning.startX;
+                    const dy = lightning.endY - lightning.startY;
+                    const lineLengthSquared = dx * dx + dy * dy;
+                    
+                    // Create a copy of enemies array to avoid modification during iteration
+                    const currentEnemies = [...enemies];
+                    
+                    for (const enemy of currentEnemies) {
+                        const t = ((enemy.x - lightning.startX) * dx + (enemy.y - lightning.startY) * dy) / lineLengthSquared;
                         
-                        // Calculate projection of enemy onto line
-                        const t = ((enemy.x - lightning.startX) * dx + (enemy.y - lightning.startY) * dy) / lineLength;
-                        
-                        // If projection is within line segment
                         if (t >= 0 && t <= 1) {
-                            // Calculate point on line closest to enemy
                             const projX = lightning.startX + t * dx;
                             const projY = lightning.startY + t * dy;
-                            
-                            // Calculate squared distance from enemy to line
                             const distX = enemy.x - projX;
                             const distY = enemy.y - projY;
-                            const distance = distX * distX + distY * distY;
+                            const distanceSquared = distX * distX + distY * distY;
                             
-                            // If enemy is close enough to line
-                            if (distance < (enemy.radius + 5) * (enemy.radius + 5)) {
+                            if (distanceSquared < (enemy.radius + 5) * (enemy.radius + 5)) {
                                 enemy.health -= lightning.damage;
                                 
-                                // Check if enemy is dead
                                 if (enemy.health <= 0) {
                                     handleEnemyDeath(enemy);
                                 }
@@ -2080,46 +2042,43 @@
                     }
                 }
                 
-                // Remove lightning if faded out
                 if (lightning.alpha <= 0) {
                     lightningArcs.splice(i, 1);
                 }
             }
             
-            // Update shrapnel fragments
+            // Update shrapnel fragments with optimized collision detection
             for (let i = shrapnelFragments.length - 1; i >= 0; i--) {
                 const fragment = shrapnelFragments[i];
                 
-                // Move fragment
                 fragment.x += Math.cos(fragment.angle) * fragment.speed;
                 fragment.y += Math.sin(fragment.angle) * fragment.speed;
-                
-                // Fade out
                 fragment.alpha -= 0.02;
                 
-                // Check for enemy collisions
                 if (fragment.alpha > 0) {
-                    for (const enemy of enemies) {
+                    const fragmentRadiusSquared = (fragment.radius + 15) * (fragment.radius + 15);
+                    
+                    // Create a copy of enemies array to avoid modification during iteration
+                    const currentEnemies = [...enemies];
+                    
+                    for (const enemy of currentEnemies) {
                         const dx = enemy.x - fragment.x;
                         const dy = enemy.y - fragment.y;
-                        const distance = dx * dx + dy * dy;
+                        const distanceSquared = dx * dx + dy * dy;
                         
-                        if (distance < (enemy.radius + fragment.radius) * (enemy.radius + fragment.radius)) {
+                        if (distanceSquared < fragmentRadiusSquared) {
                             enemy.health -= fragment.damage;
                             
-                            // Check if enemy is dead
                             if (enemy.health <= 0) {
                                 handleEnemyDeath(enemy);
                             }
                             
-                            // Remove fragment after hit
                             shrapnelFragments.splice(i, 1);
                             break;
                         }
                     }
                 }
                 
-                // Remove fragment if faded out
                 if (fragment.alpha <= 0) {
                     shrapnelFragments.splice(i, 1);
                 }
@@ -2138,6 +2097,9 @@
 
         // Helper functions to handle common operations
         function handleEnemyDeath(enemy) {
+            // Safety check to prevent processing dead enemies
+            if (!enemy) return;
+            
             // Apply gold rush bonus if active
             let goldValue = enemy.value;
             if (passiveSkillsData.goldRush.level > 0) {
@@ -2160,12 +2122,12 @@
                 enemiesRemaining--;
                 
                 // Check for bullet storm
-                if (passiveSkillsData.bulletStorm.level > 0) {
+                if (passiveSkillsData.bulletStorm.level > 0 && player.ammo > 0) {
                     const stormChance = passiveSkillsData.bulletStorm.levels[passiveSkillsData.bulletStorm.level - 1].chance;
-                    if (Math.random() < stormChance && player.ammo > 0) {
+                    if (Math.random() < stormChance && enemies.length > 0) {
                         // Find a random enemy to shoot at
-                        if (enemies.length > 0) {
-                            const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                        const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                        if (randomEnemy) {
                             const bulletAngle = Math.atan2(randomEnemy.y - player.y, randomEnemy.x - player.x);
                             
                             // Apply Storm Surge effect if active
@@ -2183,6 +2145,14 @@
         }
 
         function handleBulletHit(bullet, enemy, bulletIndex, enemyIndex) {
+            // Safety check to prevent processing dead enemies
+            if (!enemy || enemy.health <= 0) {
+                if (bulletIndex !== undefined) {
+                    bullets.splice(bulletIndex, 1);
+                }
+                return;
+            }
+            
             // Apply damage
             let bulletDamage = bullet.damage;
             
@@ -2217,7 +2187,9 @@
                 bullet.pierceCount++;
             } else {
                 // Remove bullet unless it's a piercing bullet that can still pierce
-                bullets.splice(bulletIndex, 1);
+                if (bulletIndex !== undefined) {
+                    bullets.splice(bulletIndex, 1);
+                }
             }
         }
 
@@ -2900,7 +2872,20 @@
             if (player.gold >= currentPrice && item.stacks < item.maxStacks) {
                 player.gold -= currentPrice;
                 item.stacks++;
-                item.effect();
+                
+                // Special handling for Bandit's Bandolier
+                if (itemId === 'banditsBandolier') {
+                    // Reapply ammo capacity skill effect to update total ammo
+                    if (passiveSkillsData.ammoCapacity.level > 0) {
+                        applySkillEffects('ammoCapacity');
+                    } else {
+                        // If no ammo capacity skill, just apply the item bonus
+                        player.maxAmmo = 6 + (item.stacks * 3);
+                    }
+                    player.ammo = player.maxAmmo;
+                } else {
+                    item.effect();
+                }
                 
                 // Update HUD
                 updateHUD();
@@ -3137,7 +3122,8 @@
                     player.health = Math.min(player.health, player.maxHealth);
                     break;
                 case 'ammoCapacity':
-                    player.maxAmmo = 6;
+                    // Calculate ammo based on Bandit's Bandolier only
+                    player.maxAmmo = 6 + (shopItems.banditsBandolier.stacks * 3);
                     player.ammo = Math.min(player.ammo, player.maxAmmo);
                     break;
                 case 'reloadSpeed':
