@@ -383,6 +383,7 @@
             display: none;
             z-index: 100;
             touch-action: none;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -935,7 +936,17 @@
                 zone: joystickZone,
                 mode: 'dynamic',
                 color: 'rgba(240, 214, 168, 0.5)',
-                size: 100
+                size: 100,
+                lockY: true,
+                fadeTime: 0
+            });
+
+            joystick.on('start', () => {
+                joystickZone.style.pointerEvents = 'auto';
+            });
+
+            joystick.on('end', () => {
+                joystickZone.style.pointerEvents = 'none';
             });
 
             joystick.on('move', (evt, data) => {
